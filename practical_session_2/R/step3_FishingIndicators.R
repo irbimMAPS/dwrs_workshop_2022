@@ -1,7 +1,7 @@
 rm(list=ls())
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
-setwd('..') # Push to set the WD to a backward place
+setwd("practical_session_2/") # Push to set the WD to a backward place
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions

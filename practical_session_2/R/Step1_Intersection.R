@@ -1,14 +1,17 @@
 # Check Working directory
-setwd('..')
+setwd("practical_session_2/")
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
-source("R/global_functions_light.R")
 library(sf)
 library(lubridate)
 library(tidyverse)
+
+source("R/supporting_code/global_functions_light.R")
+
 wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 options(warn=-1)
+# sf::use_sf_s2(FALSE)
 # Load base grid ####
 grid=read_sf("maps/grid")
 st_crs(grid)=wgs
