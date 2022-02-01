@@ -3,7 +3,7 @@ setwd('..')
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
-source("R/global_functions_light.R")
+source("R/supporting_code/global_functions_light.R")
 library(sf)
 library(lubridate)
 library(tidyverse)
@@ -32,6 +32,7 @@ for(j in 1:length(ref_years)){
   
   # Read data and prepare it for next steps
   f_tracks=read_sf(file.path("data",j_yr,paste0("f_segments_sub_", j_yr, ".shp")))
+  if(nrow(f_tracks)==0){next}
   f_tracks$s_time=as_datetime(f_tracks$s_time, tz='UTC')
   f_tracks$f_time=as_datetime(f_tracks$f_time, tz='UTC')
   f_tracks=split(f_tracks, f_tracks$MMSI)
