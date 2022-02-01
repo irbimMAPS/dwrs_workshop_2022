@@ -157,8 +157,6 @@ gear
 fishing_points=identify_fishing_points(data=dat_classified[["data_labelled"]], gear=gear, coord_sys = wgs)
 head(fishing_points)
 
-xrange = range(fishing_points$longitude)
-yrange = range(fishing_points$latitude)
 ggplot() +
   geom_sf(data = coastal_ban_zone, fill = "green") +
   geom_sf(data = worldmap, fill = "gray55") +
