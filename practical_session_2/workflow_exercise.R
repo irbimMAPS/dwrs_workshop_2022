@@ -198,8 +198,6 @@ ggplot() +
 vessel_grid=estimate_fishing_effort(fishing_tracks, grid=grid)
 head(vessel_grid)
 
-bb = st_bbox(fishing_tracks[[1]])
-
 ggplot() +
   geom_sf(data = coastal_ban_zone, fill = "green") +
   geom_sf(data = worldmap, fill = "gray55") +
