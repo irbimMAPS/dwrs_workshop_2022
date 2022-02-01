@@ -1,12 +1,11 @@
 # Check Working directory
-setwd("practical_session_2/")
+getwd() # The WD have to be "practical_session_2"
+setwd('practical_session_2/') # Push to set the WD to a backward place
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
-<<<<<<< HEAD
-=======
+
 source("R/supporting_code/global_functions_light.R")
->>>>>>> cd69c3e910150d1735b022c0cc26aaf96b6ffef7
 library(sf)
 library(lubridate)
 library(tidyverse)
