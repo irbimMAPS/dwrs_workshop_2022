@@ -303,6 +303,7 @@ for(j in 1:length(ref_gear)){
     xmap$year=ref_time$year[i]
     xmap$month=ref_time$month[i]
     xmap$gear=ref_gear[j]
+    xmap$f_hours = as.numeric(xmap$f_hours)
     xmap=st_sf(xmap)
     if(dir.exists(file.path(outdir, "tables"))==F){
       dir.create(file.path(outdir, "tables"))
