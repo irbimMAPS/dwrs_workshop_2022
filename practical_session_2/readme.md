@@ -10,7 +10,7 @@ This repository contains all the material needed for the practical session 2. St
 
  <ul>
   <li>Participants to the GFCM-workshop (held online on 07/02/2022): the virtual machine shared has all the pre-requisites needed to run the code.</li>
-  <li>Any other: the `sf` package have some compatibility issue for the actual version of the shared code. The version required is 0.9-6, available [here](https://cran.r-project.org/src/contrib/Archive/sf) </li>
+  <li>Any other: the `sf` package have some compatibility issue for the actual version of the shared code. The version required is 0.9-6, available at https://cran.r-project.org/src/contrib/Archive/sf </li>
 </ul> 
  To install the correct `sf` version from the R console you may run the following lines of code:
  
