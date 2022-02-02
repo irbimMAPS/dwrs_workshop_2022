@@ -13,10 +13,12 @@ This repository contains all the material needed for the practical session 2. St
   <li>Any other: the `sf` package have some compatibility issue for the actual version of the shared code. The version required is 0.9-6, available [here](https://cran.r-project.org/src/contrib/Archive/sf) </li>
 </ul> 
  To install the correct `sf` version from the R console you may run the following lines of code:
+ 
 ```
 require(devtools)
 install_version("sf", version = "0.9-6", repos = "http://cran.us.r-project.org")
 ```
+
 ## Folder organization
 
 The folder is organised into 3 sub-folders:
