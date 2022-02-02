@@ -1,6 +1,14 @@
+# This code is based on the workflow adopted to elaborate Automatic Identification System (AIS) data for the report "Identification and mapping of bottom trawl fishing grounds for deep-water red shrimp in the Eastern-Central Mediterranean Sea (GSAs 12-16, 18-27)", requested by the General Fisheries Commitee for the Mediterranean Sea (GFCM). 
+# ---
+# title: "Aggregate fishing effort grid to produce fishing pressure metrics"
+# authors: "Enrico Nicola Armelloni, Jacopo Pulcinella"
+# date: "February 1st, 2022"
+# ---
+# contact address: maps.irbim@irbim.cnr.it
+
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
-setwd('practical_session_2/') # Push to set the WD to a backward place
+setwd('practical_session_2/') 
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
@@ -38,14 +46,14 @@ lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
 #  Map  #### 
 ## Calculations ####
 ### Step 1: aggregate data to get mean annual fishing intensity by grid cell ####
-mean_hours_by_year=aggregate(list(f_hours=fishing_data$f_hours), 
+mean_hours_by_year=aggregate(list(f_hours_year=fishing_data$f_hours), 
                              by=list('G_ID'= fishing_data$G_ID ,'year'=fishing_data$year), FUN=sum)
-mean_hours_over_year=aggregate(list(f_hours=mean_hours_by_year$f_hours), 
+mean_hours_over_year=aggregate(list(f_hours_overall=mean_hours_by_year$f_hours_year), 
                                by=list('G_ID'=mean_hours_by_year$G_ID),FUN=mean)
 
 ### Step 2: paste information to the grid ####
 grid_fishing=merge(grid, mean_hours_over_year, by='G_ID', all.x=F)
-grid_fishing$f_hours_log=log(grid_fishing$f_hours + 1)
+grid_fishing$f_hours_log=log(grid_fishing$f_hours_overall + 1)
 
 rm(grid,mean_hours_by_year , mean_hours_over_year)
 
@@ -93,21 +101,21 @@ rm(plot_effort_map, grid_DW, grid_SW, gsa, dep, land, defo_map)
 ### Step 1: compute monthly data ####
 monthly_effort=aggregate(list(nhours=fishing_data$f_hours), 
           by=list('year'= fishing_data$year, 'month'= fishing_data$month ,'DW'=fishing_data$DW), FUN=sum)
-monthly_effort$lag=as.Date(paste(monthly_effort$year, monthly_effort$month, "01", sep = "-"))
+monthly_effort$temporal_ref=as.Date(paste(monthly_effort$year, monthly_effort$month, "01", sep = "-"))
 
 vessel_month=unique(fishing_data[,c('MMSI','month','year')])
 vessel_month=aggregate(vessel_month$MMSI, by=list('year'=vessel_month$year , 'month'=vessel_month$month), FUN=length)
-vessel_month$lag=as.Date(paste(vessel_month$year, vessel_month$month, "01", sep = "-"))
+vessel_month$temporal_ref=as.Date(paste(vessel_month$year, vessel_month$month, "01", sep = "-"))
 
 ### Step 2:  expand to full ts ####
 index=data.frame(order=seq(1, 48, 1), 
-           lag=seq(as.Date(paste("2015", "01", "01", sep = "-")),
+           temporal_ref=seq(as.Date(paste("2015", "01", "01", sep = "-")),
                    as.Date(paste("2018", "12", "01", sep = "-")),"month"))
 
-month_rbs=merge(index, monthly_effort, by="lag", all.x = T)
+month_rbs=merge(index, monthly_effort, by="temporal_ref", all.x = T)
 month_rbs[!is.na(month_rbs$DW) & month_rbs$DW==1,]$DW='DW'
 month_rbs[!is.na(month_rbs$DW) & month_rbs$DW==0,]$DW='SW'
-vessel_month=merge(index, vessel_month, by="lag", all.x = T)
+vessel_month=merge(index, vessel_month, by="temporal_ref", all.x = T)
 
 
 
@@ -123,8 +131,8 @@ plot_effort_ts=defo_ts +
   scale_fill_manual(values = c("deepskyblue3", "tomato3")) + 
   xlab("")  + 
   scale_x_reverse(breaks=seq(min(month_rbs$order),max(month_rbs$order),3), 
-                  labels=paste(substr(seq(min(month_rbs$lag),max(month_rbs$lag),"quarters"),1,4),
-                               month.abb[as.numeric(substr(seq(min(month_rbs$lag),max(month_rbs$lag),"quarters"),6,7))], sep="-"))+
+                  labels=paste(substr(seq(min(month_rbs$temporal_ref),max(month_rbs$temporal_ref),"quarters"),1,4),
+                               month.abb[as.numeric(substr(seq(min(month_rbs$temporal_ref),max(month_rbs$temporal_ref),"quarters"),6,7))], sep="-"))+
   guides(fill = guide_legend(title = "Fishing ground")) +
   ylab("Hours") +
   geom_line(data=vessel_month, aes(x=order, y = x*50), size = 0.7) +
