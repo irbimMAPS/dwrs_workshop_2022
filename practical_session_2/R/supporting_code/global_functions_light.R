@@ -1,8 +1,16 @@
+# This code is based on the workflow adopted to elaborate Automatic Identification System (AIS) data for the report "Identification and mapping of bottom trawl fishing grounds for deep-water red shrimp in the Eastern-Central Mediterranean Sea (GSAs 12-16, 18-27)", requested by the General Fisheries Commitee for the Mediterranean Sea (GFCM). 
+# ---
+# title: "Functions in support to the DWRS workflow"
+# authors: "Enrico Nicola Armelloni, Jacopo Pulcinella"
+# date: "February 1st, 2022"
+# ---
+# contact address: maps.irbim@irbim.cnr.it
+
 "%ni%"=Negate('%in%')
 
 
 ###--- Estimate fishing effort ####
-estimate_fishing_effort <- function(fishing_tracks, grid){
+estimate_fishing_effort_DWRS <- function(fishing_tracks, grid){
   lapply(fishing_tracks, function(x){
     if(is.data.frame(x)){
       x = st_sf(x)
