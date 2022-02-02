@@ -4,22 +4,7 @@
 # authors: "Enrico Nicola Armelloni, Jacopo Pulcinella"
 # date: "February 1st, 2022"
 # ---
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/
-# 
 # contact address: maps.irbim@irbim.cnr.it
-
-
 
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
@@ -28,7 +13,7 @@ getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
 source("R/supporting_code/global_functions_light.R")
-library(sf)
+library(sf) # ATTENTION: version 0.9-6 (or < 1) required!!!
 library(lubridate)
 library(tidyverse)
 wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
