@@ -17,7 +17,7 @@ rm(list=ls(all=FALSE)) # clear previous variables etc
 #options(digits=3) # displays all numbers with three significant digits as default
 options(dplyr.summarise.inform=FALSE)
 options("pbapply.pb"="txt")
-setwd("...") # Working directory where the folder is stored. Default is one level backward to "R" folder
+setwd("practical_session_1") # Working directory where the folder is stored. Default is one level backward to "R" folder
 mydir=getwd()
 
 # Required File names ----
