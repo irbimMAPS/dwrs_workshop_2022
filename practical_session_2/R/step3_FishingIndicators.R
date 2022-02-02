@@ -1,7 +1,15 @@
+# This code is based on the workflow adopted to elaborate Automatic Identification System (AIS) data for the report "Identification and mapping of bottom trawl fishing grounds for deep-water red shrimp in the Eastern-Central Mediterranean Sea (GSAs 12-16, 18-27)", requested by the General Fisheries Commitee for the Mediterranean Sea (GFCM). 
+# ---
+# title: "Aggregate fishing effort grid to produce fishing pressure metrics"
+# authors: "Jacopo Pulcinella, Enrico Nicola Armelloni"
+# date: "February 1st, 2022"
+# ---
+# contact address: maps.irbim@irbim.cnr.it
+
 rm(list=ls())
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
-setwd("practical_session_2/") # Push to set the WD to a backward place
+setwd("practical_session_2/") # 
 getwd() # The WD have to be "practical_session_2"
 
 # Load libraries and functions
@@ -78,15 +86,15 @@ rm(plot_indicator_map, grid_ind5, grid_ind6, gsa,land,dep)
 ## Calculations ####
 ### Step 1: compute monthly indicator values ####
 index=tibble(order=seq(1, 48, 1),
-           lag=seq(as.Date(paste("2015", "01", "01", sep = "-")),
+           temporal_ref=seq(as.Date(paste("2015", "01", "01", sep = "-")),
                    as.Date(paste("2018", "12", "01", sep = "-")),"month"))
 
 ind_ts=NULL
 for (i in 1:nrow(index)){
   # Subset data
   idat=fishing_data[fishing_data$DW==1&
-                      fishing_data$year==lubridate::year(index[i,]$lag)&
-                      fishing_data$month==lubridate::month(index[i,]$lag),]
+                      fishing_data$year==lubridate::year(index[i,]$temporal_ref)&
+                      fishing_data$month==lubridate::month(index[i,]$temporal_ref),]
   if(nrow(idat)==0){
     next
     }else{
@@ -94,7 +102,7 @@ for (i in 1:nrow(index)){
       idat=aggregate(list('f_hours'=idat$f_hours), by=list('G_ID'=idat$G_ID), FUN=sum)
       #idat=idat[idat$f_hours>0.33,] ### discuss this!!!
       i6=ind6(idat)
-      ind_ts = rbind(ind_ts, data.frame(lag=index[i,]$lag, dcf5=nrow(i5),dcf6=nrow(i6))) 
+      ind_ts = rbind(ind_ts, data.frame(temporal_ref=index[i,]$temporal_ref, dcf5=nrow(i5),dcf6=nrow(i6))) 
       rm(i5,i6, idat)
     }
 }
@@ -104,14 +112,14 @@ ind_ts$ncell_rbs=grid_cells[grid_cells$Var1==1,]$Freq
 ind_ts$dcf5_ratio = round(ind_ts$dcf5/ind_ts$ncell_rbs,4)
 ind_ts$dcf6_ratio = round(ind_ts$dcf6/ind_ts$ncell_rbs, 4) 
 ind_ts$dcf_ratio = round((ind_ts$dcf6)/(ind_ts$dcf5),4)
-ind_ts$lag=as.Date(ind_ts$lag)
+ind_ts$temporal_ref=as.Date(ind_ts$temporal_ref)
 
 rm(grid_cells, grid)
 ### Step 2:  expand to full ts ####
 ind_ts=merge(index, ind_ts, all.x = T)
 ind_ts[is.na(ind_ts)]=0
 
-ind_ts=reshape2:::melt(ind_ts[,c('lag','order', 'dcf5_ratio', 'dcf6_ratio')], id.var=1:2)
+ind_ts=reshape2:::melt(ind_ts[,c('temporal_ref','order', 'dcf5_ratio', 'dcf6_ratio')], id.var=1:2)
 ind_ts$variable=factor(ifelse(ind_ts$variable == "dcf5_ratio", "Ext", "Agg"), levels = c("Ext", "Agg"))
 
 ## Specifications for the plot ####
@@ -125,14 +133,14 @@ plot_indicators_ts = defo_ts +
   geom_bar(data = ind_ts , aes(x=order, value, fill = variable), stat = "identity", colour = 1, na.rm = F, size=0.2) +
   scale_fill_manual(values = c("orange", "tomato3")) + 
   scale_x_reverse(breaks=seq(min(ind_ts$order),max(ind_ts$order),3), 
-                  labels=paste(substr(seq(min(ind_ts$lag),max(ind_ts$lag),"quarters"),1,4),
-                               month.abb[as.numeric(substr(seq(min(ind_ts$lag),max(ind_ts$lag),"quarters"),6,7))], sep="-"))+
+                  labels=paste(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),1,4),
+                               month.abb[as.numeric(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),6,7))], sep="-"))+
   geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Ext", ]$value)))+
   geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Agg", ]$value)), linetype=2)+
   xlab("") +
   ylab("Proportion of DW")  + 
   guides(fill = guide_legend(title = "Indicator", size = 15), linetype=guide_legend())+
-  scale_y_continuous(sec.axis = sec_axis(~ . /50,breaks=c(1),labels="", name=expression(paste(""[""["Ext "]],   bold("__"), ""[""["  Agg "]],bold("_ _") ))), name=expression(""[""["Proportion of DW"]])) #+
+  scale_y_continuous(sec.axis = sec_axis(~ . /50,breaks=c(1),labels="", name=expression(paste(""[""["Ext "]],   bold("__"), ""[""["  Agg "]],bold("_ _") ))), name=expression(""[""["Proportion of DW"]]));plot_indicators_ts
 
 
 ggsave(plot=plot_indicators_ts, 
