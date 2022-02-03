@@ -1,0 +1,166 @@
+---
+title: "Exercise"
+output: 
+ html_document:
+    toc: true
+    #number_sections: true
+    toc_float: true
+    collapsed: false
+---
+Starting from the raw fishing data of 5 vessels operating in GSA 23 apply the R4ais workflow to obtain fishing segments, and then analyse the data to obtain a map of the fishing effort. The exercise is divided into 4 questions which helps you to get the desired result. All the code you need is part of the script seen today.
+
+
+# Before to start
+
+You need to check your working directory (WD), which have to be "dwrs_workshop_2022". The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place. 
+
+```{r cars, echo=T, message=F, warning=F}
+getwd() # The WD have to be "dwrs_workshop_2022"
+setwd('..') # Push one to set the WD to a backward place
+getwd() # check the WD: it have to be "practical_session_2. If is not yet right, push again on line 6 and check"
+```
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022')
+library(kableExtra)
+
+```
+
+### Load sample data
+
+Data needed for the exercise are the sample fishing points
+
+```{r, echo=T}
+sample_data=readRDS("practical_session_2/data/exercise_data.rData")
+```
+```{r, echo=F}
+head((sample_data))%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+
+```{r, echo=F, message=F,warning=F}
+library(leaflet)
+library(RColorBrewer)
+library(sf)
+pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
+st_as_sf(sample_data, coords = c('longitude' ,'latitude' )) %>%
+  leaflet( width = 900) %>%addCircles(
+   # remove polygon borders
+    
+   opacity = 0.5,
+   weight =3,
+   color='red')%>%
+  addProviderTiles(providers$Esri.OceanBasemap) 
+  #addTiles()
+
+
+```
+
+### Load R4ais functions
+
+In addition you need to load the functions contained in the R4ais release. You need just to run the following lines
+
+```{r, echo=T, message=F,warning=F}
+base_dir=getwd()
+setwd(file.path(base_dir, 'practical_session_1'))
+dirmaps="AIS_data_processing/maps" # path of the maps directory
+file_parameters="AIS_data_processing/data/parameters.csv" # import parameter table
+file_centroids="AIS_data_processing/data/centroids.csv" # import centroids 
+wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" # Insert your coordinates system
+install.missing.packages=T # set to TRUE if want to allow automatic installation of missing packages.
+source("AIS_data_processing/R/global_functions.R") # load all internal function required
+ports<-read_sf(file.path(dirmaps, "med_harb_gsa")) # import list of ports
+port_buf<-st_buffer(ports, 0.001) # create a buffer
+st_crs(port_buf)=wgs # set crs
+coastal_ban_zone=read_sf(file.path(dirmaps, "coastal_ban_zone")) # import managment depth layer
+st_crs(coastal_ban_zone)=wgs # set crs
+grid<-read_sf(file.path(dirmaps, "grid01degrees")) # import a grid
+grid$grid_id=seq(1:nrow(grid)) # create cell grid id
+st_crs(grid)=wgs # set crs
+centroids=inport_parameters(file.path(file_parameters), file.path(file_centroids))[[2]]
+pars=inport_parameters(file.path(file_parameters), file.path(file_centroids))[[1]]
+setwd(base_dir)
+```
+
+<br>
+
+# Questions
+
+### Q1
+Obtain the fishing segments from one single vessel (data provided): you need to identify the right function from the workflow.
+Tip: the output of the function is a list, so you need to process the output as x=plyr::ldply(x)
+
+As input data you can use sample_dat_Q1, produced as:
+
+```{r, echo=T}
+sample_dat_Q1=sample_data[sample_data$MMSI==unique(sample_data$MMSI)[1],]
+```
+
+
+### Q2
+Extract fishing segments from all the vessels in the sample data at once: you need to identify the right function from the workflow. The resulting object must be called `all_fishing_tracks`
+Tip: after having applied the right function, you need to pass the output to the following lines 
+
+```{r, echo=F}
+all_fishing_tracks=list(a=list())
+```
+
+```{r, echo=T}
+# post process 1
+for(i in 1:length(all_fishing_tracks)){
+all_fishing_tracks[[i]]=plyr::ldply(all_fishing_tracks[[i]])
+}
+# post process 2
+all_fishing_tracks=plyr::ldply(all_fishing_tracks)
+
+```
+
+
+
+### Q3
+Intersect the obtained data with the grid of GSA 23. Tip: the piece of code you need is a for loop.
+
+Before to start, run the following lines to import the correct function and parameters (attention: this is an extra tip).
+```{r, echo=T}
+source("practical_session_2/R/supporting_code/global_functions_light.R")
+grid=read_sf("practical_session_2/maps/grid")
+activate_filter='Y'
+ref_years=2015:2018
+```
+
+
+### Q4
+Create a map of the fishing effort.
+Tip: the following lines import all the shapefiles and the plot specifications.
+
+```{r, echo=T, message=F,warning=F}
+grid_whole <- read_sf("practical_session_2/maps/grid")
+
+land=read_sf("practical_session_2/maps/land")%>% 
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48) #
+
+gsa<-read_sf("practical_session_2/maps/gsa")%>%
+  dplyr::filter(SMU_CODE == '23' )
+
+dep = read_sf("practical_session_2/maps/depth_contours")%>%
+  st_cast(., to = "POLYGON")%>%
+  st_set_crs(st_crs(gsa))%>%
+  st_buffer(0)%>%
+  st_crop(gsa)
+
+lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+
+#### Specifications for the plot ####
+# Plot size
+text_size=8
+plot_height=25
+plot_width=18
+library(ggspatial)
+library(ggnewscale)
+source("practical_session_2/R/supporting_code/plot_specifications.R")
+```
+
+
+
+
