@@ -2,7 +2,7 @@
 
 <i>Processing and mapping AIS data </i>
 
-This repository contains all the material needed for the practical sessions. Starting from pre-classified deep-water fishing tracks, R scripts used to estimate and map metrics of fishing pressure in the context of the GFCM-DWRS framework will be introduced and shared. The session will be focused on a pilot GSA. An hands-on exercise related to all the topics covered during the day is also foreseen.
+This repository contains all the material needed for the practical sessions. The first session will focus on the analysis of raw AIS data for generic purposes such as identification of trips, classification of fishing gear and exctaction of singnals relative to fishing activity. The second session will be focused on the estimation and mapping of fishing effort, and relative pressure indicators, in the context of the GFCM-DWRS framework with specific focus on a pilot GSA.
 
 ## Prerequisites
 
