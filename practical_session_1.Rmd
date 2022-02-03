@@ -113,7 +113,7 @@ Three vector layers are required to perform the functions foreseen by the workfl
 
 * ports (.shp).  Port locations were stored as point buffers or manually designed, to best include approach channels to ports, and described by following attributes: name, country and statistical Area (for our scope we use GFCM Geographical Sub-Area; GSA).
 * coastal_ban_zone (.shp). Zone where the use of towed gears is prohibited, as defined by Article 13(1) of Regulation (EC) No 1967/2006. It is bounded by  3 nautical miles of the coast or by the 50 m isobath where that depth is reached at a shorter distance from the coast.
-* grid (.shp). It is the spatial grid used to aggregate fishing effort and estimate fishing hours. The grid provided in this repository is available here.
+* grid (.shp). It is the spatial grid used to aggregate fishing effort and estimate fishing hours. The grid is provided in this repository.
 
 <p> These layers cover the Mediterranean basin and should be manually recreated in order to reproduce the processing workflow in different areas.
 <br>
@@ -176,7 +176,7 @@ head(dat_with_trip)
 ## Fishing trip classification and gear assignment
 The classification_wrapper function applies a cascade of classification algorithms on each fishing trip, using as input the AIS positions with their assigned trip (dat_with_trip) and the specific parameters needed for each classification algorithm (pars). The classification of each fishing trip is done by two internal functions (classify_speed and search_cluster), whose results are used to label each fishing point according to the speed clusters (in the case of towed gears) or spatial clusters (in the case of PS). 
 
-<p> In particular, a k-means algorithms is performed on trip-specific speed values using 5 different sets of centroids that were a priori defined by experts for each fishing gear type (two for OTB, PTM, TBB and PS), the centroids will represent the different speed profiles of fishing behavioural states. The dbscan algorithm is applied on the latitude and longitude data, with two different sets of neighborhood radii (??) and a number of minimum points in the ?? region. The proportions of points falling within each of the identified clusters are used to label the fishing trip as positive or negative to each of the investigated gears.
+<p> In particular, a k-means algorithms is performed on trip-specific speed values using 5 different sets of centroids that were a priori defined by experts for each fishing gear type (two for OTB, PTM, TBB and PS), the centroids will represent the different speed profiles of fishing behavioural states. The dbscan algorithm is applied on the latitude and longitude data, with two different sets of neighborhood radii (ε) and a number of minimum points in the ε region. The proportions of points falling within each of the identified clusters are used to label the fishing trip as positive or negative to each of the investigated gears.
 
 ```{r dat_classification, message = F, warning=F}
 dat_classified=classification_wrapper(vessel_data=dat_with_trip, 
@@ -255,7 +255,7 @@ head(fishing_points)
 <br>
 
 
-<p> The make_fishing_tracks function extracts fishing tracks from fishing points, using a temporal threshold (thr_minute, default value set to 30 minutes) to connect successively ordered fishing points ??? thr_minutes and avoid false fishing tracks connecting two subsequent fishing events. The result of make_fishing_tracks function is a spatial object where the fishing geometries are stored.
+<p> The make_fishing_tracks function extracts fishing tracks from fishing points, using a temporal threshold (thr_minute, default value set to 30 minutes) to connect successively ordered fishing points <= thr_minutes and avoid false fishing tracks connecting two subsequent fishing events. The result of make_fishing_tracks function is a spatial object where the fishing geometries are stored.
 
 ```{r fsegment}
 fishing_tracks=make_fishing_tracks(data=fishing_points, coord_sys=wgs, pars=pars)
@@ -297,7 +297,7 @@ fishing_tracks=classification_workflow(data=data,
 <br>
 
 ## Estimate fishing effort
-Finally, the estimate_fishing_effort function returns a grid populated with cumulative fishing time for the period covered by the input data (hours fishing vessels spent operating gear in each grid cell). Fishing tracks were intersected with the 0.1? grid and durations were computed for each output feature. For towed gears, fishing hours are calculated by dividing resulting lengths by the inherited mean fishing speed. For the purse seiners, fishing hours are calculated by assigning the duration of the cluster to its centroid. The cumulative fishing time was quantified spatial joining each cell with overlapping centroid/portions of hauls, and summing relative durations.
+Finally, the estimate_fishing_effort function returns a grid populated with cumulative fishing time for the period covered by the input data (hours fishing vessels spent operating gear in each grid cell). Fishing tracks were intersected with the 0.1° grid and durations were computed for each output feature. For towed gears, fishing hours are calculated by dividing resulting lengths by the inherited mean fishing speed. For the purse seiners, fishing hours are calculated by assigning the duration of the cluster to its centroid. The cumulative fishing time was quantified spatial joining each cell with overlapping centroid/portions of hauls, and summing relative durations.
 
 ```{r effort, message = F, warning=F}
 vessel_grid=estimate_fishing_effort(fishing_tracks, grid=grid)
