@@ -15,7 +15,7 @@ library(knitr)
 library(kableExtra)
 library(ggspatial)
 library(ggnewscale)
-knitr::opts_knit$set(root.dir = 'C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022/practical_session_2')
+knitr::opts_knit$set(root.dir = 'practical_session_2')
 ```
 
 This release note aims to describe the AIS processing method used to produce the outputs of the chapter 3.4 of the report, starting from fishing segments. The processing workflow was developed to aggregate data into (i) cumulative fishing effort metrics and (ii) DCF 5 and 6 indicators for fishing pressure. Both data are visualized as spatial map and as monthly time-series. Each step is showed as code chunk and it is briefly described.

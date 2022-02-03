@@ -1,31 +1,47 @@
 ---
-title: "Index"
+title: "Workshop on the deep-water red shrimb fishery in the Central-Eastern Mediterranean Sea"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-## Introduction
-
-This documents accompain the R code used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps*.
-It aims to detail part of the workflow adopted to elaborate Automatic Identification System (AIS) data in the context of the GFCM initiative to map fishing ground for deep-water red shrimp in the Eastern-Central Mediterranean Sea. The focus is on some of the plots shown in the chapter 3.4 of the report, in particular those referring to the aggregated fishing effort (Figure 1 a and b) and to the DCF indicators of fishing pressure (Figure 1 c and d).
-
-## Structure
-
-This document is structured into three sections that will be approached within the lesson:
-
- - *Processing and analysis*: here is presented the entire workflow that would be shown during the lecture. Starting from fishing tracks, data are intersected with a spatial grid. The results are aggregated in different ways to produce fishing effort metrics and indicators.
- 
- - *Functions*: contains the customized functions used repeatedly within the code. 
- 
- - *Exercise*: this section contains the instructions needed to complete the lecture exercise. 
-
 <br>
 
+## Description
+<p align="justify"> The workshop is aimed to analyze AIS data and map fishing effort, sharing R scripts. First, a theoretical session will be dedicated to show AIS-based scientific applications in fishery management and introduce the R processing workflow. Two practical sessions will thus be carried out to differentiate according to the programming levels of participants and break the processing workflow into: (i) management/classification of AIS data, and (ii) estimation of fishing effort and its mapping. Course material is available at <a href="https://github.com/irbimMAPS/dwrs_workshop_2022">https://github.com/irbimMAPS/dwrs_workshop_2022</a>.
+<br>
 
-![Figure 1: Fishing activities of vessels DW trawling in GSA 23. (a) Spatial distribution of mean DW and SW fishing activities during the study period; (b) Monthly fishing hours in DW (red) and SW (blue), and number of DW trawlers exerting these activities (solid line); (c) Spatial distribution of fishing pressure indicators of Extension (orange) and Aggregation (red) during the study period; (d) Monthly proportions of the DW area trawled and average values for fishing pressure indicators of extension (orange bars and solid line, respectively) and aggregation (red bars and dashed line, respectively); (e - f) Annual fishing hours in DW (red) and SW (blue) by GSA of arrival and country, and number of DW trawlers exerting these activities](site_documents/plotGSA23.png "Title")
+<p> Contact to: <a href="mailto:maps.irbim@irbim.cnr.it">maps.irbim@irbim.cnr.it</a>
+<br>
+
+## Agenda 07/02/2022
+<br>
+
+<ul>
+  <li>09:30: Theoretical session - Use of AIS in DWRS fishery management
+  <li>11:00: Practical session #1 (entry level R users) - Processing and classification of AIS data: from raw data to fishing tracks.
+  <li>12:30: Lunch break
+  <li>14:00:Practical session #2 (advanced R users) - Mapping DW fishing grounds: from fishing tracks to fishing effort maps
+  <li>16:30:Final recap and closing
+</ul>
+<br>
+
+### Theorical session - Use of AIS in DWRS fishery managment
+<ul>
+  <li> Identification and mapping of bottom trawl fishing grounds for DWRS in the Eastern-Central Mediterranean Sea.
+  <li> Introduction to the workflow to map AIS-based fishing effort.
+</ul>
+<br>
+
+### Practical session #1
+<p align="justify"> Processing and classification: from AIS raw data to fishing points. Starting from AIS pings, the workflow is based on the procedures available at  <a href="https://zenodo.org/record/4761890">https://zenodo.org/record/4761890</a>. It was developed on historical annotated data of the Adriatic Sea and aims to (i) identify individual fishing trips, (ii) classify them on a monthly basis according to predefined gear classes, and (iii) identify fishing pings/hauls. We will also spend some time understanding AIS datasets and R scripts, preparing you to handle your own data in a reproducible manner. 
+<br>
+
+### Practical session #2
+<p align="justify"> Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps. Starting from pre-classified deep-water fishing tracks, R scripts used to estimate and map metrics of fishing pressure in the context of the GFCM-DWRS framework will be introduced and shared. The session will be focused on a pilot GSA. An hands-on exercise related to all the topics covered during the day is also foreseen. 
+
+
 
 
 <script>

@@ -19,7 +19,7 @@ library(data.table)
 library(viridis)
 "%ni%"=Negate('%in%')
 sf_use_s2(FALSE)
-classification_RF=readRDS("AIS_data_processing/R/RF_gear_release_v2.rds")
+classification_RF=readRDS("practical_session_1/AIS_data_processing/R/RF_gear_release_v2.rds")
 ###--- Assign ping to trip ####
 # This function paste the information from the fishing trip (id of the trip) to the initial dataset. Points that does not fall within a trip are removed
 assign_trip = function(data, trip_table){

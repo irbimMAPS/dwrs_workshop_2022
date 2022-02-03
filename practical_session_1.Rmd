@@ -21,7 +21,7 @@ library(sf)
 #-----------------------------------------
 # General settings ----
 #-----------------------------------------
-setwd("C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022")
+
 rm(list=ls(all=FALSE)) # clear previous variables etc
 #options(digits=3) # displays all numbers with three significant digits as default
 options(dplyr.summarise.inform=FALSE)
@@ -46,9 +46,8 @@ output.name="test"
 #-----------------------------------------
 # Load data ----
 #-----------------------------------------
-setwd("C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022/practical_session_1")
-source("AIS_data_processing/R/global_functions.R") # load all internal function required
-setwd("C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022")
+
+source("practical_session_1/AIS_data_processing/R/global_functions.R") # load all internal function required
 
 ## the following lines load and arrange spatial layers required in the next analyses
 ports<-read_sf(file.path(dirmaps, "med_harb_gsa")) # import list of ports

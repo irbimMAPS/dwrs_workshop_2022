@@ -20,7 +20,7 @@ setwd('..') # Push one to set the WD to a backward place
 getwd() # check the WD: it have to be "practical_session_2. If is not yet right, push again on line 6 and check"
 ```
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = 'C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022')
+knitr::opts_knit$set(root.dir = getwd())
 library(kableExtra)
 
 ```
@@ -63,13 +63,13 @@ In addition you need to load the functions contained in the R4ais release. You n
 
 ```{r, echo=T, message=F,warning=F}
 base_dir=getwd()
-setwd(file.path(base_dir, 'practical_session_1'))
-dirmaps="AIS_data_processing/maps" # path of the maps directory
-file_parameters="AIS_data_processing/data/parameters.csv" # import parameter table
-file_centroids="AIS_data_processing/data/centroids.csv" # import centroids 
+# setwd(file.path(base_dir, 'practical_session_1'))
+dirmaps="practical_session_1/AIS_data_processing/maps" # path of the maps directory
+file_parameters="practical_session_1/AIS_data_processing/data/parameters.csv" # import parameter table
+file_centroids="practical_session_1/AIS_data_processing/data/centroids.csv" # import centroids 
 wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" # Insert your coordinates system
 install.missing.packages=T # set to TRUE if want to allow automatic installation of missing packages.
-source("AIS_data_processing/R/global_functions.R") # load all internal function required
+source("practical_session_1/AIS_data_processing/R/global_functions.R") # load all internal function required
 ports<-read_sf(file.path(dirmaps, "med_harb_gsa")) # import list of ports
 port_buf<-st_buffer(ports, 0.001) # create a buffer
 st_crs(port_buf)=wgs # set crs

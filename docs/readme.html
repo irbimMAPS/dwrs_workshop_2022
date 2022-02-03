@@ -11,7 +11,7 @@
 
 
 
-<title>Workshop on the deep-water red shrimb fishery in the Central-Eastern Mediterranean Sea</title>
+<title></title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -261,60 +261,39 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Workshop on the deep-water red shrimb fishery in the Central-Eastern Mediterranean Sea</h1>
 
 </div>
 
 
-<p><br></p>
-<div id="description" class="section level2">
-<h2>Description</h2>
-<p align="justify">
-<p>The workshop is aimed to analyze AIS data and map fishing effort, sharing R scripts. First, a theoretical session will be dedicated to show AIS-based scientific applications in fishery management and introduce the R processing workflow. Two practical sessions will thus be carried out to differentiate according to the programming levels of participants and break the processing workflow into: (i) management/classification of AIS data, and (ii) estimation of fishing effort and its mapping. Course material is available at <a href="https://github.com/irbimMAPS/dwrs_workshop_2022">https://github.com/irbimMAPS/dwrs_workshop_2022</a>. <br></p>
-<p>
-<p>Contact to: <a href="mailto:maps.irbim@irbim.cnr.it">maps.irbim@irbim.cnr.it</a> <br></p>
-</div>
-<div id="agenda-07022022" class="section level2">
-<h2>Agenda 07/02/2022</h2>
-<p><br></p>
+<div id="practical-sessions" class="section level1">
+<h1>Practical sessions</h1>
+<p><i>Processing and mapping AIS data </i></p>
+<p>This repository contains all the material needed for the practical sessions. The first session will focus on the analysis of raw AIS data for generic purposes such as identification of trips, classification of fishing gear and exctaction of singnals relative to fishing activity. The second session will be focused on the estimation and mapping of fishing effort, and relative pressure indicators, in the context of the GFCM-DWRS framework with specific focus on a pilot GSA.</p>
+<div id="prerequisites" class="section level2">
+<h2>Prerequisites</h2>
 <ul>
 <li>
-09:30: Theoretical session - Use of AIS in DWRS fishery management
+Participants to the GFCM-workshop (held online on 07/02/2022): the virtual machine shared has all the pre-requisites needed to run the code.
+</li>
 <li>
-11:00: Practical session #1 (entry level R users) - Processing and classification of AIS data: from raw data to fishing tracks.
-<li>
-12:30: Lunch break
-<li>
-14:00:Practical session #2 (advanced R users) - Mapping DW fishing grounds: from fishing tracks to fishing effort maps
-<li>
-16:30:Final recap and closing
+Any other: the <code>sf</code> package have some compatibility issue for the actual version of the shared code. The version required is 0.9-6, available at <a href="https://cran.r-project.org/src/contrib/Archive/sf" class="uri">https://cran.r-project.org/src/contrib/Archive/sf</a>
+</li>
 </ul>
-<p><br></p>
-<div id="theorical-session---use-of-ais-in-dwrs-fishery-managment" class="section level3">
-<h3>Theorical session - Use of AIS in DWRS fishery managment</h3>
+<p>To install the correct <code>sf</code> version from the R console you may run the following lines of code:</p>
+<pre><code>require(devtools)
+install_version(&quot;sf&quot;, version = &quot;0.9-6&quot;, repos = &quot;http://cran.us.r-project.org&quot;)</code></pre>
+</div>
+<div id="description-of-the-repository" class="section level2">
+<h2>Description of the repository</h2>
+<p>There are 2 practical session folders:</p>
 <ul>
 <li>
-Identification and mapping of bottom trawl fishing grounds for DWRS in the Eastern-Central Mediterranean Sea.
+Practical session #1 - Processing and classification: from AIS raw data to fishing points
+</li>
 <li>
-Introduction to the workflow to map AIS-based fishing effort.
+Practical session #2 - Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps
+</li>
 </ul>
-<p><br></p>
-</div>
-<div id="practical-session-1" class="section level3">
-<h3>Practical session #1</h3>
-<p align="justify">
-<p>Processing and classification: from AIS raw data to fishing points. Starting from AIS pings, the workflow is based on the procedures available at <a href="https://zenodo.org/record/4761890">https://zenodo.org/record/4761890</a>. It was developed on historical annotated data of the Adriatic Sea and aims to (i) identify individual fishing trips, (ii) classify them on a monthly basis according to predefined gear classes, and (iii) identify fishing pings/hauls. We will also spend some time understanding AIS datasets and R scripts, preparing you to handle your own data in a reproducible manner. <br></p>
-</div>
-<div id="practical-session-2" class="section level3">
-<h3>Practical session #2</h3>
-<p align="justify">
-<p>Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps. Starting from pre-classified deep-water fishing tracks, R scripts used to estimate and map metrics of fishing pressure in the context of the GFCM-DWRS framework will be introduced and shared. The session will be focused on a pilot GSA. An hands-on exercise related to all the topics covered during the day is also foreseen.</p>
-<script>
-   $(document).ready(function() {
-     $head = $('#header');
-     $head.prepend('<img src=\"site_documents/gfcmlogo.jpg\" style=\"float: right;width: 100px;\"/>')
-   });
-</script>
 </div>
 </div>
 
