@@ -1,0 +1,746 @@
+---
+title: "Workflow"
+output: 
+ html_document:
+    toc: true
+    #number_sections: true
+    toc_float: true
+    collapsed: false
+---
+```{r setup, echo=F,message=FALSE, warning=FALSE}
+library(sf)
+library(lubridate)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggspatial)
+library(ggnewscale)
+knitr::opts_knit$set(root.dir = 'C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022/practical_session_2')
+```
+
+This release note aims to describe the AIS processing method used to produce the outputs of the chapter 3.4 of the report, starting from fishing segments. The processing workflow was developed to aggregate data into (i) cumulative fishing effort metrics and (ii) DCF 5 and 6 indicators for fishing pressure. Both data are visualized as spatial map and as monthly time-series. Each step is showed as code chunk and it is briefly described.
+
+
+## Spatial data 
+
+The shapefiles contained in the maps folder are all used along with the following analysis and in the plot section. Here are briefly introduced:
+
+ - grid: a 1km by 1km grid covering the GSA 23, with additional attributes indicating the bottom type and if the cell is or not within the 400-800 m bathymetry.
+ - land: contour of land
+ - gsa: boundaries of the GFCM-GSA
+ - dep: contour of the 400-800m batymetry
+
+```{r, echo=TRUE,message=FALSE, warning=FALSE}
+grid <- read_sf("maps/grid")
+
+land=read_sf("maps/land")%>% 
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48) #
+
+gsa<-read_sf("maps/gsa")%>%
+  dplyr::filter(SMU_CODE == '23' )
+
+dep = read_sf("maps/depth_contours")%>%
+  st_cast(., to = "POLYGON")%>%
+  st_set_crs(st_crs(gsa))%>%
+  st_buffer(0)%>%
+  st_crop(gsa)
+
+lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+```
+<br>
+<br>
+
+## Pre-processing of fishing tracks
+
+The topic of this first section is the overlap of the fishing track to a grid covering the reference area. This is a key-step ans its output will represent the basis for all the images contained in the Figure 1.
+<br>
+### Before to start
+
+Check the working directory (WD), which have to be “practical_session_2”. The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place.
+
+
+```{r, include=FALSE}
+source("R/supporting_code/global_functions_light.R")
+library(lubridate)
+library(knitr)
+library(kableExtra)
+wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+```
+
+
+
+
+
+### Load spatial Data and set parameters
+
+The first part of the code aim to prepare the environment for the processing of the fishing data. 
+It is loaded the spatial grid,
+
+```{r, echo=T}
+grid=read_sf("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/maps/grid")
+```
+
+and are defined two parameters:
+
+ * `activate_filter` activates a filter to the data to remove outliers (see below in Step 4)
+ * `ref_years` indicate the time span of the analysis
+
+```{r, echo=T}
+activate_filter='Y'
+ref_years=2015:2018
+```
+
+### For loop exploded
+
+In the original code, all the following steps are done within a for loop iterating on the years (as defined by `ref_years`). For illustrative purposes, here we present all the operations outside the for loop, taking the year 2015 as example.
+
+#### Step 1
+
+Load the fishing data for one year (2015 used as example)
+
+```{r, echo=T}
+f_tracks=read_sf(file.path("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data",2015,paste0("f_segments_sub_", 2015, ".shp")))
+f_tracks$s_time=as_datetime(f_tracks$s_time, tz='UTC')
+f_tracks$f_time=as_datetime(f_tracks$f_time, tz='UTC')
+```
+
+The fishing data `f_tracks` contains the following information:
+
+ 
+ * MMSI: identifier of the vessel responsible for the fishing activity
+ * year: year in which the fishing activity was observed
+ * month: month in which the fishing activity was observed
+ * gear: gear predicted for the fishing activity
+ * trip: identifier of the trip where the fishing activity was observed
+ * id_track: identifier of the fishing track
+ * s_time: start time of the fishing track
+ * f_time: end time of the fishing track
+ * range: parameter that applies to Purse Seine fishing activity
+ * geometry: spatial attribute
+
+```{r, echo=F}
+head((f_tracks))%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+And they appear as in the map here shown:
+
+```{r, echo=F}
+f_tracks=read_sf(file.path("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data",2015,paste0("f_segments_sub_", 2015, ".shp")))
+
+library(leaflet)
+library(RColorBrewer)
+pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
+st_as_sf(f_tracks) %>%
+  leaflet( width = 900) %>%addPolylines(
+   # remove polygon borders
+    
+   opacity = 0.5,
+   weight =3,
+   color='red')%>%
+  addProviderTiles(providers$Esri.OceanBasemap) 
+  #addTiles()
+
+
+```
+
+
+#### Step 2
+
+The next step deals with applying the `estimate_fishing_effort` function on the data for each vessel. This function, which is inherited from the R4ais workflow, is defined in a separate script. Here below is shown the original code. The function performs a spatial intersection between the fishing tracks and the grid cells, then it aggregate the results to obtain the fishing activity occurring within each grid cell.  The difference with the R4ais version is in the factors used to aggregate the data: data are aggregated by the factors `grid_id+gear+MMSI+trip+s_time`, while in the R4ais only by `grid_id+gear`. This modification was needed to keep data at the maximum level of disaggregation, permitting later to use the same dataset for multiple purposes.
+
+```{r, echo=T}
+estimate_fishing_effort <- function(fishing_tracks, grid){
+  lapply(fishing_tracks, function(x){
+    if(is.data.frame(x)){
+      x = st_sf(x)
+    }
+    xgear = unique(x$gear)
+    st_crs(x)=wgs # set crs 
+    if(xgear == "PS"){
+      x$duration=difftime(x$f_time, x$s_time, units="secs")
+      x=st_as_sf(x)
+      xint=st_intersection(grid, x)
+      xint=data.frame(xint)
+      xint=xint[,c("grid_id", "gear", "duration")]
+      xint$fishing_hours=xint$duration/3600
+      f_hours = aggregate(fishing_hours~grid_id+gear, data = xint, sum)
+      colnames(f_hours)[ncol(f_hours)] = "f_hours"
+      grid_edit=merge(grid, f_hours, by="grid_id") # combine effort to grid
+      return(grid_edit)
+    }else{
+      x$distance=st_length(x$geometry, units="m") # estimated fishing track 
+      x$duration=difftime(x$f_time, x$s_time, units="secs")
+      x$speed_ms=as.numeric(x$distance)/as.numeric(x$duration)
+      x$speed_kn=x$speed_ms*1.94384
+      x=st_as_sf(x)
+      xint=st_intersection(grid, x)
+      if(nrow(xint) > 0){
+        xint$observed_swept=st_length(xint)
+        xint=data.frame(xint)
+        xint=xint[,c("grid_id","MMSI", "trip", "s_time" ,"gear","observed_swept", "speed_ms")]
+        xint$fishing_hours=(as.numeric(xint$observed_swept)/xint$speed_ms)/3600
+        xint
+        f_hours = aggregate(fishing_hours~grid_id+gear+MMSI+trip+s_time, data = xint, sum)  # estimate fishing effort in cells grid
+        colnames(f_hours)[ncol(f_hours)] = "f_hours"
+        grid_edit=merge(grid, f_hours, by="grid_id") # combine effort to grid
+        grid_edit=grid_edit[grid_edit$f_hours>0,]
+         grid_edit=grid_edit[,c("MMSI","gear", "trip", "s_time" , 'G_ID', 'DW', 'f_hours')]
+        return(grid_edit)
+      }
+    }
+  })
+  
+}
+```
+
+Data are first divided into a list by vessel identifier and then the function is applied on each element of the list. 
+
+```{r, echo=T,message=FALSE, warning=FALSE}
+f_tracks=split(f_tracks, f_tracks$MMSI)
+f_tracks_grid=estimate_fishing_effort(f_tracks, grid)
+
+```
+
+#### Step 3
+
+The output of the `estimate_fishing_effort` function is a list. So the data need to be unlisted and formatted.
+Then, the information about year and month it is added.
+
+```{r, echo=T}
+  f_tracks_grid=plyr::ldply(f_tracks_grid,.id = NULL)
+  f_tracks_grid=f_tracks_grid[ , -which(names(f_tracks_grid) %in% c("grid_id", 'geometry'))]  ## remove not useful information
+  f_tracks_grid$month=lubridate::month(f_tracks_grid$s_time)
+  f_tracks_grid$year=lubridate::year(f_tracks_grid$s_time)
+```
+
+```{r, echo=F}
+head(data.frame(f_tracks_grid))%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+#### Step 4 (Optional)
+
+To remove some outlier we may exclude all these grid cells that over the entire year were fished for less than 0.33 hours.
+
+```{r, echo=T}
+ if(activate_filter=="Y"){
+    print("Filtering activated")
+    outlier_filter=aggregate(x=f_tracks_grid$f_hours, by=list('G_ID'=f_tracks_grid$G_ID,'year'=f_tracks_grid$year ), FUN=sum)
+    outlier_filter=outlier_filter[outlier_filter$x>=0.33,c('G_ID','year')]
+    f_tracks_grid=merge(outlier_filter, f_tracks_grid, by=c("G_ID", "year"), all.x=T)
+  }
+```
+
+
+#### Results
+```{r, include=FALSE}
+#rm(list = ls())
+setwd("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1")
+source("R/global_functions_light.R")
+library(tidyverse)
+library(sf)
+library(ggspatial)
+library(ggnewscale)
+library(knitr)
+library(kableExtra)
+fishing_data= read_csv("data/fishing_data.csv")
+```
+
+The resulting data `fishing_data` is the base grid having the cells filled with the information of fishing activity. Each row refers to the intersection bewteen a grid cell and a fishing tracks, as such each fishing track is divided into as many rows as the number of grid cells intersected. This type of information permit to aggregate the fishing activity in all the ways needed for the further analysis.
+
+Column contains the following information:
+
+ * G_ID: id of the grid cell
+ * year: year in which the fishing activity was observed
+ - MMSI: identifier of the vessel responsible for the fishing activity
+ - gear: gear predicted for the fishing activity
+ - trip: identifier of the trip where the fishing activity was observed
+ - s_time: start time of the fishing track (not related to the grid cell)
+ - DW: binary column indicating if the grid cell falls in the DW strata.
+ - f_hours: fishing hours observed in the cell for the specific fishing track
+ - month: month in which the fishing activity was observed
+
+Here it is shown the header of the dataset.
+
+```{r, echo=FALSE}
+# Load data ####
+head(fishing_data)%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+
+```
+
+
+<br>
+<br>
+
+## Fishing effort map
+
+This section presents the code used to produce the Figure 35.a of the DWS-Fishing activity report. It is a thematic map showing the mean overall fishing hours by square km in the GSA 23, over the period january 2015-december 2018.
+
+### Before to start
+
+Check the working directory (WD), which have to be “practical_session_2”. The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place.
+
+### Load data
+
+The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
+In the following line there is the possibility to reduce the dataset by selecting only those vessels that fished in the DW strata at least once in a month.
+
+```{r, echo=TRUE}
+vessel_selection=unique(fishing_data[fishing_data$DW==1,c('MMSI','month','year')]) # Create a monthly list of vessels fishing in the DW strata
+
+fishing_data=merge(vessel_selection, fishing_data, by=c("MMSI", "year", "month"), all.x = T)
+```
+
+### Calculate statistics
+
+#### Step 1
+
+The `fishing_data` dataset is aggregated to get mean annual fishing intensity by grid cell. This is done in two consecutive aggregate functions. The `mean_hours_by_year` dataset is the annual cumulative values of fishing activity by grid cell. In the following line, the same dataset is further summarized into `mean_hours_over_year`, which is the mean value by cell over the years.
+
+```{r, echo=TRUE}
+mean_hours_by_year=aggregate(list(f_hours=fishing_data$f_hours), 
+                             by=list('G_ID'= fishing_data$G_ID ,'year'=fishing_data$year), FUN=sum)
+mean_hours_over_year=aggregate(list(f_hours=mean_hours_by_year$f_hours), 
+                               by=list('G_ID'=mean_hours_by_year$G_ID),FUN=mean)
+```
+
+
+```{r, echo=F}
+list(head(mean_hours_by_year),
+     head(mean_hours_over_year)) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+#### Step 2 
+Now that the overall fishing intensity by grid cell is obtained, it is possible to paste this information to the base grid. This is done by using the `merge` function, using the *G_ID* column as primary key. An additional column with the log of fishing hours is also created 
+
+```{r, echo=TRUE}
+grid_fishing=merge(grid, mean_hours_over_year, by='G_ID', all.x=F)
+grid_fishing$f_hours_log=log(grid_fishing$f_hours + 1)
+```
+
+
+```{r, echo=F}
+head(grid_fishing)%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+
+This is how appear the grid populated with fishing activity. The interactive map is just for illustrative purposes and it is not part of the R code used for the course.
+
+
+
+```{r, echo=F}
+library(leaflet)
+library(RColorBrewer)
+pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
+labs=quantile(grid_fishing$f_hours)
+labs=c(paste(as.character(round(labs[1:2],digits=2)), collapse = '-'),
+       paste(as.character(round(labs[2:3],digits=2)), collapse = '-'),
+       paste(as.character(round(labs[3:4],digits=2)), collapse = '-'),
+       paste(as.character(round(labs[4:5],digits=2)), collapse = '-'))
+
+st_as_sf(grid_fishing) %>%
+  leaflet( width = 900) %>%addPolygons(
+    stroke = FALSE, # remove polygon borders
+    fillColor =  ~pal_fun(f_hours),
+    fillOpacity = 0.8)%>%
+  addProviderTiles(providers$Esri.OceanBasemap) %>%
+  addLegend("bottomright", 
+             colors = brewer.pal(4, "YlOrRd"),
+            labels=labs,
+                title = 'Fishing hours per sqkm')
+  #addTiles()
+#names(providers)
+```
+
+
+
+#### Step 3
+
+To facilitate the plotting, grid data are divided by depth in two separate files (`grid_DW` and `grid_SW`). Fishing hours are also normalized. 
+
+```{r, echo=TRUE}
+grid_DW=grid_fishing[grid_fishing$DW==1,]
+grid_DW$f_hours_log_st=st_fun(grid_DW$f_hours_log)
+
+grid_SW=grid_fishing[grid_fishing$DW==0,]
+grid_SW$f_hours_log_st=st_fun(grid_SW$f_hours_log)
+```
+
+
+
+### Specifications for the plot
+
+Plots are standardized between figures. The fontsize is defined in the additional code `plot_specifications`. See on the "Functions" table for the details.
+
+```{r, echo=TRUE}
+text_size=8
+plot_height=25
+plot_width=18
+source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+```
+
+In addition, labeling was optimized to fit the data of each area.
+
+
+```{r, echo=TRUE}
+brks_DW = seq(0, 1, length.out = 10)[c(2,4,6,8,10)]
+brks_DW_lab = round(exp((brks_DW*(max(grid_DW$f_hours_log) - min(grid_DW$f_hours_log))) + min(grid_DW$f_hours_log)))
+
+brks_SW = seq(0, 1, length.out = 10)[c(2,4,6,8,10)]
+brks_SW_lab = round(exp((brks_SW*(max(grid_SW$f_hours_log) - min(grid_SW$f_hours_log))) + min(grid_SW$f_hours_log)))
+```
+
+
+### Plot it!
+
+The object `defo_map` contains all the settings specified above and represents the basis of our plot. Here are added the effort statistics, along with the parameters to set the legend values appropriately.
+
+```{r, echo=TRUE}
+plot_effort_map = defo_map+
+  geom_sf(data = grid_SW, aes(fill = f_hours_log_st), colour = NA, alpha = 0.8, show.legend = "point" ) +
+  scale_fill_gradient(low = "lightskyblue1", high = "blue", breaks = brks_SW, labels = brks_SW_lab, guide = guide_colorbar(title = "SW (h/km2)")) +
+  new_scale("fill") +  
+  geom_sf(data = grid_DW, aes(fill = f_hours_log_st), colour = NA) +
+  scale_fill_gradient("DW (h/km2)", breaks = brks_DW, labels = brks_DW_lab, low = "yellow", high = "firebrick") +
+  coord_sf(xlim=c(lims[[1]], lims[[3]]), ylim=c(lims[[2]], lims[[4]]) , label_axes = list(bottom = "E", right = "N")) +
+  xlab("") ; plot_effort_map
+```
+
+<br>
+<br>
+
+
+## Fishing effort TS
+
+The section here described is part of the same script of fishing effort map. 
+
+### Load data
+
+The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
+
+### Calculate statistics
+
+#### Step 1
+
+The procedure is similar to what described in the Fishing effort map section, however the values here are calculate on monthly basis and summarized.
+
+The `monthly_effort` dataset contains the cumulative monthly fishing hours by grid cell. In an additional line of code it is pasted a formatted timestamp information
+
+```{r, echo=TRUE}
+monthly_effort=aggregate(list(nhours=fishing_data$f_hours), 
+          by=list('year'= fishing_data$year, 'month'= fishing_data$month ,'DW'=fishing_data$DW), FUN=sum)
+monthly_effort$lag=as.Date(paste(monthly_effort$year, monthly_effort$month, "01", sep = "-"))
+```
+
+```{r, echo=F}
+head(monthly_effort) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+The `vessel_month` dataset the overall monthly number of fishing vessels in the case study area, both for the DW and the SW batimetries. In an additional line of code it is pasted a formatted timestamp information
+
+```{r, echo=TRUE}
+vessel_month=unique(fishing_data[,c('MMSI','month','year')])
+vessel_month=aggregate(vessel_month$MMSI, by=list('year'=vessel_month$year , 'month'=vessel_month$month), FUN=length)
+vessel_month$lag=as.Date(paste(vessel_month$year, vessel_month$month, "01", sep = "-"))
+```
+
+```{r, echo=F}
+head(vessel_month) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+
+#### Step 2
+
+The monthly fishing hours and vessel statistics are calculated only for those months were fishing activity was actually observed. However we aim to consider in the plot also the months where no activity at all was observed. Therefore some formatting line are needed. 
+
+```{r, echo=TRUE}
+index=data.frame(order=seq(1, 48, 1), 
+           lag=seq(as.Date(paste("2015", "01", "01", sep = "-")),
+                   as.Date(paste("2018", "12", "01", sep = "-")),"month"))
+
+month_rbs=merge(index, monthly_effort, by="lag", all.x = T)
+month_rbs[!is.na(month_rbs$DW) & month_rbs$DW==1,]$DW='DW'
+month_rbs[!is.na(month_rbs$DW) & month_rbs$DW==0,]$DW='SW'
+vessel_month=merge(index, vessel_month, by="lag", all.x = T)
+```
+
+### Specifications for the plot
+
+Plots are standardized between figures. The fontsize is defined with the following lines.Common specifications for ggplot are stored in a separate file, called `plot_specifications.R`.
+
+```{r, echo=TRUE}
+text_size=8
+plot_height=25
+plot_width=18
+source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+```
+
+
+### Plot it!
+
+```{r, echo=TRUE}
+plot_effort_ts=defo_ts +
+  geom_bar(data = month_rbs, aes(x=order,y= nhours, fill = reorder(DW, desc(DW))), stat = "identity", colour = 1, size=0.2) +
+  scale_fill_manual(values = c("deepskyblue3", "tomato3")) + 
+  xlab("")  + 
+  scale_x_reverse(breaks=seq(min(month_rbs$order),max(month_rbs$order),3), 
+                  labels=paste(substr(seq(min(month_rbs$lag),max(month_rbs$lag),"quarters"),1,4),
+                               month.abb[as.numeric(substr(seq(min(month_rbs$lag),max(month_rbs$lag),"quarters"),6,7))], sep="-"))+
+  guides(fill = guide_legend(title = "Fishing ground")) +
+  ylab("Hours") +
+  geom_line(data=vessel_month, aes(x=order, y = x*50), size = 0.7) +
+  scale_y_continuous(sec.axis = sec_axis(~ . /50, name=expression(paste(""[""["No. DW trawlers"]], paste(bold(" __"))))), name=expression( ""[""["F hours"]])) ; plot_effort_ts
+```
+<br>
+<br>
+
+
+## Indicators Map
+```{r, include=FALSE}
+fishing_data= read_csv("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data/Intersections_names.csv")
+```
+### Before to start
+
+Check the working directory (WD), which have to be “practical_session_2”. The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place.
+
+
+### Load data
+
+The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
+
+### Calculate statistics
+
+#### Step 1
+
+The indicator map is performed only for the DW strata and over the entire reference period. As so, the first step requires to filter the input data to the reference batymetric strata and to aggregate the fishing activity by grid cell over the 2015-208 period.
+
+```{r, echo=TRUE}
+DWfishing_data=fishing_data[fishing_data$DW==1,]
+DWfishing_data=aggregate(list('f_hours'=DWfishing_data$f_hours), 
+                         by=list('G_ID'= DWfishing_data$G_ID), FUN=sum)
+```
+
+```{r, echo=TRUE}
+head(DWfishing_data) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+#### Step 2
+
+The successive step relates to the calculation of the indicators. The dedicated functions are stored in a separate file for tidiness purpose and are shown here below. 
+The `ind5` function serve to calculate the MSFD indicator D5, or the extension of the fishing activity in a given area. It calculate the number of cells of the grid were fishing activity was observed over the reference period. 
+
+```{r, echo=TRUE}
+ind5=function(x){
+  x = unique(x[,c('G_ID')])
+  return(x)
+}
+```
+
+The `ind6` serve to calculate the MSFD indicator D6, or the aggregation of the fishing activity in a given area. It calculate the number of cells of the grid containing the 90% of the cumulative distribution of the fishing activity over the refere
+
+
+```{r, echo=TRUE}
+ind6=function(x){
+  x = x[order(x$f_hours, decreasing = T),]
+  x$cum = cumsum(x$f_hours)
+  xthr = sum(x$f_hours, na.rm = T) * 0.9
+  x=x[which(x$cum <= xthr),]
+  return(x)
+}
+```
+
+Both functions are applied to the data.
+
+```{r, echo=TRUE}
+ind5_map=ind5(DWfishing_data)
+ind6_map=ind6(DWfishing_data)
+```
+
+```{r, echo=F}
+list(head(ind5_map),head(ind6_map)) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+#### Step 3 
+Paste the mean overall fishing intensity to the grid shapefile. For indicator 5 it is enough to filter the grid. For indicator 6 is done by using the `merge` function, using the *G_ID* column as primary key. 
+
+```{r, echo=TRUE}
+grid_ind5=grid[grid$G_ID%in%ind5_map,]
+grid_ind6=merge(grid, ind6_map, by='G_ID', all.x=F)
+```
+
+
+```{r, echo=F}
+head(grid_ind6)%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+### Specifications for the plot
+
+Plots are standardized between figures. The fontsize is defined with the following lines.
+
+```{r, echo=TRUE}
+text_size=8
+plot_height=25
+plot_width=18
+source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+```
+
+
+### Plot it!
+
+```{r, echo=TRUE}
+plot_indicator_map = defo_map+
+  geom_sf(data = grid_ind5, aes(fill = "orange"), colour = NA) +
+  geom_sf(data = grid_ind6, aes(fill = "tomato3"), colour = NA) +
+  scale_fill_identity(guide='legend',
+                      breaks = c("orange", "tomato3"),
+                      labels = c("Ext", "Agg"),
+                      name='')+
+  coord_sf(xlim=c(lims[[1]], lims[[3]]), ylim=c(lims[[2]], lims[[4]]) , label_axes = list(bottom = "E", right = "N"));plot_indicator_map
+```
+
+<br>
+<br>
+
+
+
+## Indicators TS
+
+The section here described is part of the same script of fishing effort map.
+
+### Load data
+
+The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
+
+### Calculate statistics
+
+#### Step 1
+
+The procedure is similar to what described in the Indicators map section, however the `ind5` and `ind6` functions here are applied on monthly basis.
+
+First we define a temporal index, namely the month covering the period january 2015-december 2018
+
+```{r, echo=TRUE}
+index=tibble(order=seq(1, 48, 1),
+           lag=seq(as.Date(paste("2015", "01", "01", sep = "-")),
+                   as.Date(paste("2018", "12", "01", sep = "-")),"month"))
+```
+
+```{r, echo=F}
+head(index) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+Then we build a for loop to iterate on each month contained in the temporal index. For each of the  i timesteps the data are filtered on the DW stratum and the functions are applied. For each month we are interested in knowing the values assumed by the indicators, which in both cases are the number of cells falling in the indicator parameter. The `ind_ts` dataset serve to store all the monthly values, by adding the i value for each iteration over the time.
+
+```{r, echo=TRUE}
+ind_ts=NULL
+for (i in 1:nrow(index)){
+  # Subset data
+  idat=fishing_data[fishing_data$DW==1&
+                      fishing_data$year==lubridate::year(index[i,]$lag)&
+                      fishing_data$month==lubridate::month(index[i,]$lag),]
+  if(nrow(idat)==0){
+    next
+    }else{
+      i5=ind5(idat)
+      idat=aggregate(list('f_hours'=idat$f_hours), by=list('G_ID'=idat$G_ID), FUN=sum)
+      #idat=idat[idat$f_hours>0.33,] ### discuss this!!!
+      i6=ind6(idat)
+      ind_ts = rbind(ind_ts, data.frame(lag=index[i,]$lag, dcf5=nrow(i5),dcf6=nrow(i6))) 
+      rm(i5,i6)
+    }
+}
+```
+
+After having calculated the indicator monthly values we standardize them over the GSA extension by applying the following lines.
+
+```{r, echo=TRUE}
+grid_cells=data.frame(table(grid$DW, grid$GSA))
+ind_ts$ncell_rbs=grid_cells[grid_cells$Var1==1,]$Freq
+ind_ts$dcf5_ratio = round(ind_ts$dcf5/ind_ts$ncell_rbs,4)
+ind_ts$dcf6_ratio = round(ind_ts$dcf6/ind_ts$ncell_rbs, 4) 
+ind_ts$dcf_ratio = round((ind_ts$dcf6)/(ind_ts$dcf5),4)
+ind_ts$lag=as.Date(ind_ts$lag)
+```
+
+
+```{r, echo=F}
+head(ind_ts) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+
+#### Step 2
+
+The monthly fishing hours and vessel statistics are calculated only for those months were fishing activity was actually observed. However we aim to consider in the plot also the months where no activity at all was observed. To serve this scope it is possible to recycle the ord dataset, already used as temporal index for the index calculation. 
+
+```{r, echo=TRUE}
+ind_ts=merge(index, ind_ts, all.x = T)
+ind_ts[is.na(ind_ts)]=0
+```
+
+The dataset is reshaped to fit into the ggplot specifications
+
+```{r, echo=TRUE}
+ind_ts=reshape2:::melt(ind_ts[,c('lag','order', 'dcf5_ratio', 'dcf6_ratio')], id.var=1:2)
+ind_ts$variable=factor(ifelse(ind_ts$variable == "dcf5_ratio", "Ext", "Agg"), levels = c("Ext", "Agg"))
+```
+
+```{r, echo=F}
+head(ind_ts) %>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+### Specifications for the plot
+
+Plots are standardized between figures. The fontsize is defined with the following lines.
+
+```{r, echo=TRUE}
+text_size=8
+plot_height=25
+plot_width=18
+source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+```
+
+
+### Plot it!
+
+```{r, echo=TRUE}
+plot_indicators_ts = defo_ts +
+  geom_bar(data = ind_ts , aes(x=order, value, fill = variable), stat = "identity", colour = 1, na.rm = F, size=0.2) +
+  scale_fill_manual(values = c("orange", "tomato3")) + 
+  scale_x_reverse(breaks=seq(min(ind_ts$order),max(ind_ts$order),3), 
+                  labels=paste(substr(seq(min(ind_ts$lag),max(ind_ts$lag),"quarters"),1,4),
+                               month.abb[as.numeric(substr(seq(min(ind_ts$lag),max(ind_ts$lag),"quarters"),6,7))], sep="-"))+
+  geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Ext", ]$value)))+
+  geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Agg", ]$value)), linetype=2)+
+  xlab("") +
+  ylab("Proportion of DW")  + 
+  guides(fill = guide_legend(title = "Indicator", size = 15), linetype=guide_legend())+
+  scale_y_continuous(sec.axis = sec_axis(~ . /50,breaks=c(1),labels="", name=expression(paste(""[""["Ext "]],   bold("__"), ""[""["  Agg "]],bold("_ _") ))), name=expression(""[""["Proportion of DW"]])); plot_indicators_ts
+
+```
+
+

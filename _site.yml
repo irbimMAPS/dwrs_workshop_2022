@@ -8,4 +8,4 @@ navbar:
      href: render_completo.html
    - text: "Exercise"
      href: exercise_rmd.html
-output_dir: "site_documents"
+output_dir: "docs"
