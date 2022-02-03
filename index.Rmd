@@ -1,0 +1,37 @@
+---
+title: "Index"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This documents accompain the R code used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps*.
+It aims to detail part of the workflow adopted to elaborate Automatic Identification System (AIS) data in the context of the GFCM initiative to map fishing ground for deep-water red shrimp in the Eastern-Central Mediterranean Sea. The focus is on some of the plots shown in the chapter 3.4 of the report, in particular those referring to the aggregated fishing effort (Figure 1 a and b) and to the DCF indicators of fishing pressure (Figure 1 c and d).
+
+## Structure
+
+This document is structured into three sections that will be approached within the lesson:
+
+ - *Processing and analysis*: here is presented the entire workflow that would be shown during the lecture. Starting from fishing tracks, data are intersected with a spatial grid. The results are aggregated in different ways to produce fishing effort metrics and indicators.
+ 
+ - *Functions*: contains the customized functions used repeatedly within the code. 
+ 
+ - *Exercise*: this section contains the instructions needed to complete the lecture exercise. 
+
+<br>
+
+
+![Figure 1: Fishing activities of vessels DW trawling in GSA 23. (a) Spatial distribution of mean DW and SW fishing activities during the study period; (b) Monthly fishing hours in DW (red) and SW (blue), and number of DW trawlers exerting these activities (solid line); (c) Spatial distribution of fishing pressure indicators of Extension (orange) and Aggregation (red) during the study period; (d) Monthly proportions of the DW area trawled and average values for fishing pressure indicators of extension (orange bars and solid line, respectively) and aggregation (red bars and dashed line, respectively); (e - f) Annual fishing hours in DW (red) and SW (blue) by GSA of arrival and country, and number of DW trawlers exerting these activities](site_documents/plotGSA23.png "Title")
+
+
+<script>
+   $(document).ready(function() {
+     $head = $('#header');
+     $head.prepend('<img src=\"site_documents/gfcmlogo.jpg\" style=\"float: right;width: 100px;\"/>')
+   });
+</script>
+

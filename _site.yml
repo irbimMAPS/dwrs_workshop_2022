@@ -1,0 +1,11 @@
+name: "release_note"
+navbar:
+  title: "Release Note"
+  left:
+   - text: "Practical session 1"
+     href: practical_session_1.html
+   - text: "Practical session 2"
+     href: render_completo.html
+   - text: "Exercise"
+     href: exercise_rmd.html
+output_dir: "site_documents"
