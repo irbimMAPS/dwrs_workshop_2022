@@ -22,6 +22,6 @@ install_version("sf", version = "0.9-6", repos = "http://cran.us.r-project.org")
 There are 2 practical session folders:
 
  <ul>
-  <li>Practical session #1: Processing and classification: from AIS raw data to fishing points</li>
-  <li>Practical session #2: Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps</li>
+  <li>Practical session #1 - Processing and classification: from AIS raw data to fishing points</li>
+  <li>Practical session #2 - Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps</li>
 </ul> 
