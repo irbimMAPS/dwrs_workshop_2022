@@ -18,12 +18,77 @@ library(ggnewscale)
 knitr::opts_knit$set(root.dir = 'practical_session_2')
 ```
 
-This release note aims to describe the AIS processing method used to produce the outputs of the chapter 3.4 of the report, starting from fishing segments. The processing workflow was developed to aggregate data into (i) cumulative fishing effort metrics and (ii) DCF 5 and 6 indicators for fishing pressure. Both data are visualized as spatial map and as monthly time-series. Each step is showed as code chunk and it is briefly described.
+This release note accompany the R code used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps*.
+It aims to detail part of the workflow adopted to elaborate Automatic Identification System (AIS) data in the context of the GFCM initiative to map fishing ground for deep-water red shrimp in the Eastern-Central Mediterranean Sea. The processing workflow (Figure 1) is divided into three scripts and serve to (i) pre-process fishing tracks, aggregate data into (i) cumulative fishing effort metrics and (ii) DCF 5 and 6 indicators for fishing pressure. Both data are visualized as spatial map and as monthly time-series. Each step is showed as code chunk and it is briefly described. 
 
 
-## Spatial data 
+![Figure 1: Conceptual workflow used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps* ](site_documents/Flowchart_ps2.png "Title")
 
-The shapefiles contained in the maps folder are all used along with the following analysis and in the plot section. Here are briefly introduced:
+
+The results are some of the plots shown in the chapter 3.4 of the report, in particular those referring to the aggregated fishing effort (Figure 1 a and b) and to the DCF indicators of fishing pressure (Figure 2 c and d).
+
+
+![Figure 2: Fishing activities of vessels DW trawling in GSA 23. (a) Spatial distribution of mean DW and SW fishing activities during the study period; (b) Monthly fishing hours in DW (red) and SW (blue), and number of DW trawlers exerting these activities (solid line); (c) Spatial distribution of fishing pressure indicators of Extension (orange) and Aggregation (red) during the study period; (d) Monthly proportions of the DW area trawled and average values for fishing pressure indicators of extension (orange bars and solid line, respectively) and aggregation (red bars and dashed line, respectively); (e - f) Annual fishing hours in DW (red) and SW (blue) by GSA of arrival and country, and number of DW trawlers exerting these activities](site_documents/plotGSA23.png "Title")
+
+
+# Input data 
+
+Input data required to start the workflow are described below
+
+## Fishing data
+
+The fishing data are loaded as `f_tracks` in the first script (see below) and are here briefly introduced: 
+
+```{r, echo=F}
+f_tracks=read_sf("data/2015/f_segments_sub_2015.shp")
+
+f_tracks$s_time=as_datetime(f_tracks$s_time, tz='UTC')
+f_tracks$f_time=as_datetime(f_tracks$f_time, tz='UTC')
+
+head((f_tracks))%>%
+  kbl() %>%
+  kable_paper("hover", full_width = F)
+```
+
+Where: 
+
+ * MMSI: identifier of the vessel responsible for the fishing activity
+ * year: year in which the fishing activity was observed
+ * month: month in which the fishing activity was observed
+ * gear: gear predicted for the fishing activity
+ * trip: identifier of the trip where the fishing activity was observed
+ * id_track: identifier of the fishing track
+ * s_time: start time of the fishing track
+ * f_time: end time of the fishing track
+ * range: parameter that applies to Purse Seine fishing activity
+ * geometry: spatial attribute
+
+
+
+Fishing data provided are distributed as in the map here shown:
+
+```{r, echo=F}
+f_tracks=read_sf(file.path("data",2015,paste0("f_segments_sub_", 2015, ".shp")))
+
+library(leaflet)
+library(RColorBrewer)
+pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
+st_as_sf(f_tracks) %>%
+  leaflet( width = 900) %>%addPolylines(
+   # remove polygon borders
+    
+   opacity = 0.5,
+   weight =3,
+   color='red')%>%
+  addProviderTiles(providers$Esri.OceanBasemap) 
+  #addTiles()
+
+
+```
+
+## Spatial layers
+
+Fours vector layers are required to perform the functions foreseen by the workflow:
 
  - grid: a 1km by 1km grid covering the GSA 23, with additional attributes indicating the bottom type and if the cell is or not within the 400-800 m bathymetry.
  - land: contour of land
@@ -50,10 +115,19 @@ lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
 <br>
 <br>
 
-## Pre-processing of fishing tracks
+# Processing
 
+The proposed workflow is hereafter applied on the fishing tracks of a single area although it can be iterated on multiple areas. It is organized into three scripts:
+
+ - Pre Processing: it aims to overlap fishing tracks to a spatial grid. 
+ - AggregatedEffort: it start from the output of the first script and it aggregate data to produce and visualize fishing effort metrics
+ - FishingIndicators: it start from the output of the first script and it aggregate data to produce and visualize fishing effort indicators
+
+## Pre processing
 The topic of this first section is the overlap of the fishing track to a grid covering the reference area. This is a key-step ans its output will represent the basis for all the images contained in the Figure 1.
+
 <br>
+
 ### Before to start
 
 Check the working directory (WD), which have to be “practical_session_2”. The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place.
@@ -68,16 +142,13 @@ wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 ```
 
 
-
-
-
 ### Load spatial Data and set parameters
 
 The first part of the code aim to prepare the environment for the processing of the fishing data. 
 It is loaded the spatial grid,
 
 ```{r, echo=T}
-grid=read_sf("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/maps/grid")
+grid=read_sf("maps/grid")
 ```
 
 and are defined two parameters:
@@ -99,51 +170,11 @@ In the original code, all the following steps are done within a for loop iterati
 Load the fishing data for one year (2015 used as example)
 
 ```{r, echo=T}
-f_tracks=read_sf(file.path("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data",2015,paste0("f_segments_sub_", 2015, ".shp")))
+f_tracks=read_sf(file.path("data",2015,paste0("f_segments_sub_", 2015, ".shp")))
 f_tracks$s_time=as_datetime(f_tracks$s_time, tz='UTC')
 f_tracks$f_time=as_datetime(f_tracks$f_time, tz='UTC')
 ```
 
-The fishing data `f_tracks` contains the following information:
-
- 
- * MMSI: identifier of the vessel responsible for the fishing activity
- * year: year in which the fishing activity was observed
- * month: month in which the fishing activity was observed
- * gear: gear predicted for the fishing activity
- * trip: identifier of the trip where the fishing activity was observed
- * id_track: identifier of the fishing track
- * s_time: start time of the fishing track
- * f_time: end time of the fishing track
- * range: parameter that applies to Purse Seine fishing activity
- * geometry: spatial attribute
-
-```{r, echo=F}
-head((f_tracks))%>%
-  kbl() %>%
-  kable_paper("hover", full_width = F)
-```
-
-And they appear as in the map here shown:
-
-```{r, echo=F}
-f_tracks=read_sf(file.path("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data",2015,paste0("f_segments_sub_", 2015, ".shp")))
-
-library(leaflet)
-library(RColorBrewer)
-pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
-st_as_sf(f_tracks) %>%
-  leaflet( width = 900) %>%addPolylines(
-   # remove polygon borders
-    
-   opacity = 0.5,
-   weight =3,
-   color='red')%>%
-  addProviderTiles(providers$Esri.OceanBasemap) 
-  #addTiles()
-
-
-```
 
 
 #### Step 2
@@ -238,8 +269,8 @@ To remove some outlier we may exclude all these grid cells that over the entire 
 #### Results
 ```{r, include=FALSE}
 #rm(list = ls())
-setwd("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1")
-source("R/global_functions_light.R")
+#setwd("practical_session_2/")
+source("R/supporting_code/global_functions_light.R")
 library(tidyverse)
 library(sf)
 library(ggspatial)
@@ -277,7 +308,7 @@ head(fishing_data)%>%
 <br>
 <br>
 
-## Fishing effort map
+## AggregatedEffort
 
 This section presents the code used to produce the Figure 35.a of the DWS-Fishing activity report. It is a thematic map showing the mean overall fishing hours by square km in the GSA 23, over the period january 2015-december 2018.
 
@@ -288,6 +319,32 @@ Check the working directory (WD), which have to be “practical_session_2”. Th
 ### Load data
 
 The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
+
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Fishing data
+fishing_data= read_csv("data/fishing_data.csv")
+
+# Spatial data
+grid <- read_sf("maps/grid")
+
+land=read_sf("maps/land")%>% 
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48) #
+
+gsa<-read_sf("maps/gsa")%>%
+  dplyr::filter(SMU_CODE == '23' )
+
+dep = read_sf("maps/depth_contours")%>%
+  st_cast(., to = "POLYGON")%>%
+  st_set_crs(st_crs(gsa))%>%
+  st_buffer(0)%>%
+  st_crop(gsa)
+
+lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+```
+
+
+
 In the following line there is the possibility to reduce the dataset by selecting only those vessels that fished in the DW strata at least once in a month.
 
 ```{r, echo=TRUE}
@@ -296,7 +353,7 @@ vessel_selection=unique(fishing_data[fishing_data$DW==1,c('MMSI','month','year')
 fishing_data=merge(vessel_selection, fishing_data, by=c("MMSI", "year", "month"), all.x = T)
 ```
 
-### Calculate statistics
+### Effort Map
 
 #### Step 1
 
@@ -377,7 +434,9 @@ grid_SW$f_hours_log_st=st_fun(grid_SW$f_hours_log)
 
 
 
-### Specifications for the plot
+#### Plot
+
+##### Specifications for the plot
 
 Plots are standardized between figures. The fontsize is defined in the additional code `plot_specifications`. See on the "Functions" table for the details.
 
@@ -385,7 +444,8 @@ Plots are standardized between figures. The fontsize is defined in the additiona
 text_size=8
 plot_height=25
 plot_width=18
-source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+getwd()
+source("R/supporting_code/plot_specifications.R")
 ```
 
 In addition, labeling was optimized to fit the data of each area.
@@ -400,7 +460,7 @@ brks_SW_lab = round(exp((brks_SW*(max(grid_SW$f_hours_log) - min(grid_SW$f_hours
 ```
 
 
-### Plot it!
+##### Plot it!
 
 The object `defo_map` contains all the settings specified above and represents the basis of our plot. Here are added the effort statistics, along with the parameters to set the legend values appropriately.
 
@@ -419,15 +479,7 @@ plot_effort_map = defo_map+
 <br>
 
 
-## Fishing effort TS
-
-The section here described is part of the same script of fishing effort map. 
-
-### Load data
-
-The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
-
-### Calculate statistics
+### Fishing effort TS
 
 #### Step 1
 
@@ -477,7 +529,8 @@ month_rbs[!is.na(month_rbs$DW) & month_rbs$DW==0,]$DW='SW'
 vessel_month=merge(index, vessel_month, by="lag", all.x = T)
 ```
 
-### Specifications for the plot
+#### Plot
+##### Specifications for the plot
 
 Plots are standardized between figures. The fontsize is defined with the following lines.Common specifications for ggplot are stored in a separate file, called `plot_specifications.R`.
 
@@ -485,11 +538,12 @@ Plots are standardized between figures. The fontsize is defined with the followi
 text_size=8
 plot_height=25
 plot_width=18
-source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+source("R/supporting_code/plot_specifications.R")
+
 ```
 
 
-### Plot it!
+##### Plot it!
 
 ```{r, echo=TRUE}
 plot_effort_ts=defo_ts +
@@ -508,9 +562,9 @@ plot_effort_ts=defo_ts +
 <br>
 
 
-## Indicators Map
+## FishingIndicators
 ```{r, include=FALSE}
-fishing_data= read_csv("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/data/Intersections_names.csv")
+fishing_data= read_csv("data/fishing_data.csv")
 ```
 ### Before to start
 
@@ -521,7 +575,30 @@ Check the working directory (WD), which have to be “practical_session_2”. Th
 
 The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
 
-### Calculate statistics
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Fishing data
+fishing_data= read_csv("data/fishing_data.csv")
+
+# Spatial data
+grid <- read_sf("maps/grid")
+
+land=read_sf("maps/land")%>% 
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48) #
+
+gsa<-read_sf("maps/gsa")%>%
+  dplyr::filter(SMU_CODE == '23' )
+
+dep = read_sf("maps/depth_contours")%>%
+  st_cast(., to = "POLYGON")%>%
+  st_set_crs(st_crs(gsa))%>%
+  st_buffer(0)%>%
+  st_crop(gsa)
+
+lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+```
+
+### Indicator Map
 
 #### Step 1
 
@@ -592,7 +669,8 @@ head(grid_ind6)%>%
   kable_paper("hover", full_width = F)
 ```
 
-### Specifications for the plot
+#### Plot
+##### Specifications for the plot
 
 Plots are standardized between figures. The fontsize is defined with the following lines.
 
@@ -600,11 +678,11 @@ Plots are standardized between figures. The fontsize is defined with the followi
 text_size=8
 plot_height=25
 plot_width=18
-source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+source("R/supporting_code/plot_specifications.R")
 ```
 
 
-### Plot it!
+##### Plot it!
 
 ```{r, echo=TRUE}
 plot_indicator_map = defo_map+
@@ -622,15 +700,7 @@ plot_indicator_map = defo_map+
 
 
 
-## Indicators TS
-
-The section here described is part of the same script of fishing effort map.
-
-### Load data
-
-The input data is represented by the output of the pre-processing script and by the shapefiles introduced at the beginning of the lesson.
-
-### Calculate statistics
+### Indicators TS
 
 #### Step 1
 
@@ -713,7 +783,8 @@ head(ind_ts) %>%
   kable_paper("hover", full_width = F)
 ```
 
-### Specifications for the plot
+#### Plot
+##### Specifications for the plot
 
 Plots are standardized between figures. The fontsize is defined with the following lines.
 
@@ -721,11 +792,11 @@ Plots are standardized between figures. The fontsize is defined with the followi
 text_size=8
 plot_height=25
 plot_width=18
-source("C:/AIS/AIS/R/GFCM_DWF/workshop/activity1/R/plot_specifications.R")
+source("R/supporting_code/plot_specifications.R")
 ```
 
 
-### Plot it!
+##### Plot it!
 
 ```{r, echo=TRUE}
 plot_indicators_ts = defo_ts +
