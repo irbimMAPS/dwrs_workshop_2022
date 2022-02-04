@@ -648,7 +648,7 @@ DWfishing_data=aggregate(list('f_hours'=DWfishing_data$f_hours),
                          by=list('G_ID'= DWfishing_data$G_ID), FUN=sum)
 ```
 
-```{r, echo=TRUE}
+```{r, echo=FALSE}
 head(DWfishing_data) %>%
   kbl() %>%
   kable_paper("hover", full_width = F)
