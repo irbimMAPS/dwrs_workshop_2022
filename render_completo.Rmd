@@ -18,14 +18,14 @@ library(ggnewscale)
 knitr::opts_knit$set(root.dir = 'practical_session_2')
 ```
 
-This release note accompany the R code used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps*.
-It aims to detail part of the workflow adopted to elaborate Automatic Identification System (AIS) data in the context of the GFCM initiative to map fishing ground for deep-water red shrimp in the Eastern-Central Mediterranean Sea. The processing workflow (Figure 1) is divided into three scripts and serve to (i) pre-process fishing tracks, aggregate data into (i) cumulative fishing effort metrics and (ii) DCF 5 and 6 indicators for fishing pressure. Both data are visualized as spatial map and as monthly time-series. Each step is showed as code chunk and it is briefly described. 
+This release note accompanies the R code used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps*.
+It aims to detail part of the workflow adopted to elaborate Automatic Identification System (AIS) data in the context of the GFCM initiative to map fishing grounds for deep-water red shrimp in the Eastern-Central Mediterranean Sea. The processing workflow (Figure 1) is divided into three scripts and serve to (i) pre-process fishing tracks and to aggregate data for different purposes: (ii) fishing effort patterns and (iii) fishing pressure indicators. Results of points (ii) and (iii) are both visualized as map and as monthly time-series. Each step is shown as code chunk and it is briefly described. 
 
 
-![Figure 1: Conceptual workflow used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps* ](site_documents/Flowchart_ps2.png "Title")
+![Figure 1: Conceptual workflow used in the **Practical session #2** - *Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps* ](site_documents/Flowchart_ps2.png "Title"){width=75%}
 
 
-The results are some of the plots shown in the chapter 3.4 of the report, in particular those referring to the aggregated fishing effort (Figure 1 a and b) and to the DCF indicators of fishing pressure (Figure 2 c and d).
+The results are some of the plots shown in the chapter 3.4 of the DWRS report on the fishing ground mapping (not yet published), in particular those referring to the aggregated fishing effort (Figure 2 a and b) and to the indicators of fishing pressure (Figure 2 c and d).
 
 
 ![Figure 2: Fishing activities of vessels DW trawling in GSA 23. (a) Spatial distribution of mean DW and SW fishing activities during the study period; (b) Monthly fishing hours in DW (red) and SW (blue), and number of DW trawlers exerting these activities (solid line); (c) Spatial distribution of fishing pressure indicators of Extension (orange) and Aggregation (red) during the study period; (d) Monthly proportions of the DW area trawled and average values for fishing pressure indicators of extension (orange bars and solid line, respectively) and aggregation (red bars and dashed line, respectively); (e - f) Annual fishing hours in DW (red) and SW (blue) by GSA of arrival and country, and number of DW trawlers exerting these activities](site_documents/plotGSA23.png "Title")
