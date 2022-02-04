@@ -85,6 +85,7 @@ ggsave(plot=plot_indicator_map,
        width = 20, height = 20, units='cm', dpi=500)
 
 rm(plot_indicator_map, grid_ind5, grid_ind6, gsa,land,dep)
+
 #  Time-series  ####
 ## Calculations ####
 ### Step 1: compute monthly indicator values ####
@@ -104,7 +105,7 @@ for (i in 1:nrow(index)){
       i5=ind5(idat)
       idat=aggregate(list('f_hours'=idat$f_hours), by=list('G_ID'=idat$G_ID), FUN=sum)
       i6=ind6(idat)
-      ind_ts = rbind(ind_ts, data.frame(temporal_ref=index[i,]$temporal_ref, dcf5=nrow(i5),dcf6=nrow(i6))) 
+      ind_ts = rbind(ind_ts, data.frame(temporal_ref=index[i,]$temporal_ref, dcf5=length(i5),dcf6=nrow(i6))) 
       rm(i5,i6, idat)
     }
 }
