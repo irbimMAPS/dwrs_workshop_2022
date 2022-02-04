@@ -8,8 +8,8 @@
 
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
-setwd('practical_session_2/') # Push to set the WD to a backward place
-getwd() # The WD have to be "practical_session_2"
+setwd('practical_session_2/') # 
+getwd() # check again wd
 
 # Load libraries and functions
 source("R/supporting_code/global_functions_light.R")
@@ -58,7 +58,8 @@ for(j in 1:length(ref_years)){
   # Activate to remove outlier cells
   if(activate_filter=="Y"){
     print("Filtering activated")
-    outlier_filter=aggregate(x=f_tracks_grid$f_hours, by=list('G_ID'=f_tracks_grid$G_ID,'year'=f_tracks_grid$year ), FUN=sum)
+    outlier_filter=aggregate(x=f_tracks_grid$f_hours, 
+                             by=list('G_ID'=f_tracks_grid$G_ID,'year'=f_tracks_grid$year ), FUN=sum)
     outlier_filter=outlier_filter[outlier_filter$x>=0.33,c('G_ID','year')]
     f_tracks_grid=merge(outlier_filter, f_tracks_grid, by=c("G_ID", "year"), all.x=T)
   }
