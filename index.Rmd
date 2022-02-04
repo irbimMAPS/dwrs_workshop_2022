@@ -1,11 +1,18 @@
 ---
-title: "Workshop on the deep-water red shrimb fishery in the Central-Eastern Mediterranean Sea"
+title: "Quantitative methods for AIS data using R"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+<font size="4">  \center __*IDENTIFICATION OF DWRS FISHING GROUNDS USING AIS DATA*__ \center </font>
+
+
+
+
+
 <br>
 
 ## Description
@@ -51,7 +58,7 @@ Mapping deep-water fishing grounds: from fishing tracks to fishing effort maps. 
 <script>
    $(document).ready(function() {
      $head = $('#header');
-     $head.prepend('<img src=\"site_documents/gfcmlogo.jpg\" style=\"float: right;width: 100px;\"/>')
+     $head.prepend('<img src=\"site_documents/gfcmbanner.png\" style=\"float: center; width: 900px;\"/>')
    });
 </script>
 

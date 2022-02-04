@@ -4,7 +4,7 @@
 
 This repository contains all the material needed for the practical session 2. Starting from pre-classified deep-water fishing tracks, R scripts used to estimate and map metrics of fishing pressure in the context of the GFCM-DWRS framework will be introduced and shared. The session will be focused on a pilot GSA. An hands-on exercise related to all the topics covered during the day is also foreseen.
 
-[To acceed the user guide, also used as main course handbook, please click on this line](https://enriconarmelloni.github.io/index.html)
+[To acceed the user guide, also used as main course handbook, please click on this line](https://irbimmaps.github.io/dwrs_workshop_2022/render_completo.html)
 
 ## Prerequisites
 
@@ -29,5 +29,5 @@ The folder is organised into 3 sub-folders:
   <li>maps: contains the shapefiles used to make the background of the maps </li>
 </ul> 
 
-A detailed user guide can be found [here](https://enriconarmelloni.github.io/index.html)
+A detailed user guide can be found [here](https://irbimmaps.github.io/dwrs_workshop_2022/render_completo.html)
 

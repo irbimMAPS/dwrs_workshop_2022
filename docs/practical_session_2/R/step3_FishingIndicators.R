@@ -9,8 +9,8 @@
 rm(list=ls())
 # Check Working directory
 getwd() # The WD have to be "practical_session_2"
-setwd("practical_session_2/") # 
-getwd() # The WD have to be "practical_session_2"
+setwd('practical_session_2/') # 
+getwd() # check again wd
 
 # Load libraries and functions
 source("R/supporting_code/global_functions_light.R")
@@ -19,19 +19,21 @@ library(sf)
 library(ggspatial)
 library(ggnewscale)
 
-
-
 # Load data ####
 # Fishing data
 fishing_data= read_csv("data/fishing_data.csv")
+# Optional: retain only vessels that visited DW at least once in the month
+vessel_selection=unique(fishing_data[fishing_data$DW==1,c('MMSI','month','year')])
+fishing_data=merge(vessel_selection, fishing_data, by=c("MMSI", "year", "month"), all.x = T)
 
+rm(vessel_selection)
 # Shapefiles 
 grid <- read_sf("maps/grid")
 
 land=read_sf("maps/land")%>% 
-  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48) #
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48)
 
-gsa<-read_sf("maps/gsa")%>%
+gsa=read_sf("maps/gsa")%>%
   dplyr::filter(SMU_CODE == '23' )
 
 dep = read_sf("maps/depth_contours")%>%
@@ -41,6 +43,13 @@ dep = read_sf("maps/depth_contours")%>%
   st_crop(gsa)
 
 lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+
+text_size=8
+plot_height=25
+plot_width=18
+source("R/supporting_code/plot_specifications.R")
+
+defo_map # Show the default theme of the maps
 
 #  Map  #### 
 ## Calculations ####
@@ -59,12 +68,6 @@ grid_ind5=grid[grid$G_ID%in%ind5_map,]
 grid_ind6=merge(grid, ind6_map, by='G_ID', all.x=F)
 
 rm(ind5_map, ind6_map)
-## Specifications for the plot ####
-### Plot size ####
-text_size=8
-plot_height=25
-plot_width=18
-source("R/supporting_code/plot_specifications.R")
 
 ## Plot it! ####
 plot_indicator_map = defo_map+
@@ -100,7 +103,6 @@ for (i in 1:nrow(index)){
     }else{
       i5=ind5(idat)
       idat=aggregate(list('f_hours'=idat$f_hours), by=list('G_ID'=idat$G_ID), FUN=sum)
-      #idat=idat[idat$f_hours>0.33,] ### discuss this!!!
       i6=ind6(idat)
       ind_ts = rbind(ind_ts, data.frame(temporal_ref=index[i,]$temporal_ref, dcf5=nrow(i5),dcf6=nrow(i6))) 
       rm(i5,i6, idat)
@@ -123,25 +125,21 @@ ind_ts=reshape2:::melt(ind_ts[,c('temporal_ref','order', 'dcf5_ratio', 'dcf6_rat
 ind_ts$variable=factor(ifelse(ind_ts$variable == "dcf5_ratio", "Ext", "Agg"), levels = c("Ext", "Agg"))
 
 ## Specifications for the plot ####
-### Plot size ####
-text_size=8
-plot_height=25
-plot_width=18
-
+### Customize labeling ####
+plot_breaks=seq(min(ind_ts$order),max(ind_ts$order),3)
+plot_labels=paste(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),1,4),
+                  month.abb[as.numeric(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),6,7))], sep="-")
 ## Plot it ####
 plot_indicators_ts = defo_ts +
   geom_bar(data = ind_ts , aes(x=order, value, fill = variable), stat = "identity", colour = 1, na.rm = F, size=0.2) +
   scale_fill_manual(values = c("orange", "tomato3")) + 
-  scale_x_reverse(breaks=seq(min(ind_ts$order),max(ind_ts$order),3), 
-                  labels=paste(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),1,4),
-                               month.abb[as.numeric(substr(seq(min(ind_ts$temporal_ref),max(ind_ts$temporal_ref),"quarters"),6,7))], sep="-"))+
+  scale_x_reverse(breaks=plot_breaks, labels=plot_labels)+
   geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Ext", ]$value)))+
   geom_hline( aes(yintercept = mean(ind_ts[is.na(ind_ts$value)==F & ind_ts$variable =="Agg", ]$value)), linetype=2)+
   xlab("") +
   ylab("Proportion of DW")  + 
   guides(fill = guide_legend(title = "Indicator", size = 15), linetype=guide_legend())+
   scale_y_continuous(sec.axis = sec_axis(~ . /50,breaks=c(1),labels="", name=expression(paste(""[""["Ext "]],   bold("__"), ""[""["  Agg "]],bold("_ _") ))), name=expression(""[""["Proportion of DW"]]));plot_indicators_ts
-
 
 ggsave(plot=plot_indicators_ts, 
        "results/indicator_TS.png",
