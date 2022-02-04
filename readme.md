@@ -4,6 +4,8 @@
 
 This repository contains all the material needed for the practical sessions. The first session will focus on the analysis of raw AIS data for generic purposes such as identification of trips, classification of fishing gear and exctaction of singnals relative to fishing activity. The second session will be focused on the estimation and mapping of fishing effort, and relative pressure indicators, in the context of the GFCM-DWRS framework with specific focus on a pilot GSA.
 
+[To acceed the user guide, also used as main course handbook, please click here](https://irbimmaps.github.io/dwrs_workshop_2022/render_completo.html)
+
 ## Prerequisites
 
  <ul>
