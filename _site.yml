@@ -1,6 +1,6 @@
 name: "release_note"
 navbar:
-  title: "Release Note"
+  title: "Workshop Notes"
   left:
    - text: "Practical session 1"
      href: practical_session_1.html
