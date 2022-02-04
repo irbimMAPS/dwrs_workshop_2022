@@ -40,7 +40,7 @@ for(j in 1:length(ref_years)){
   j_yr=ref_years[j]
   
   # Read data and prepare it for next steps
-  f_tracks=read_sf(file.path("data",j_yr,paste0("f_segments_sub_", j_yr, ".shp")))
+  f_tracks=read_sf(file.path("data",j_yr,paste0("f_segments_DWRS_WS_", j_yr, ".shp")))
   if(nrow(f_tracks)==0){next}
   f_tracks$s_time=as_datetime(f_tracks$s_time, tz='UTC')
   f_tracks$f_time=as_datetime(f_tracks$f_time, tz='UTC')

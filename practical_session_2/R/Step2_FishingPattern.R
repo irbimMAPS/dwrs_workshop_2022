@@ -21,9 +21,7 @@ library(ggnewscale)
 # Load data ####
 # Fishing data
 fishing_data= read_csv("data/fishing_data.csv")
-# Optional: retain only vessels that visited DW at least once in the month
-vessel_selection=unique(fishing_data[fishing_data$DW==1,c('MMSI','month','year')])
-fishing_data=merge(vessel_selection, fishing_data, by=c("MMSI", "year", "month"), all.x = T)
+
 
 rm(vessel_selection)
 # Shapefiles 
@@ -52,6 +50,10 @@ defo_map # Show the default theme of the maps
 
 #  Map  #### 
 ## Calculations ####
+# Optional: retain only vessels that visited DW at least once in the month
+vessel_selection=unique(fishing_data[fishing_data$DW==1,c('MMSI','month','year')])
+fishing_data=merge(vessel_selection, fishing_data, by=c("MMSI", "year", "month"), all.x = T)
+
 ### Step 1: aggregate data to get mean annual fishing intensity by grid cell ####
 cumulative_hours_by_year=aggregate(list(f_hours_year=fishing_data$f_hours), 
                              by=list('G_ID'= fishing_data$G_ID ,'year'=fishing_data$year), FUN=sum)
