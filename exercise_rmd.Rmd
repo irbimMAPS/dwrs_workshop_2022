@@ -12,7 +12,7 @@ Starting from the raw fishing data of 5 vessels operating in GSA 23 apply the R4
 
 # Before to start
 
-You need to check your working directory (WD), which have to be "dwrs_workshop_2022". The `getwd('..')` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place. 
+You need to check your working directory (WD), which has to be "dwrs_workshop_2022". The `getwd()` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place. 
 
 ```{r cars, echo=T, message=F, warning=F}
 getwd() # The WD have to be "dwrs_workshop_2022"
@@ -40,22 +40,43 @@ head((sample_data))%>%
 
 
 ```{r, echo=F, message=F,warning=F}
-library(leaflet)
-library(RColorBrewer)
 library(sf)
-pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
-st_as_sf(sample_data, coords = c('longitude' ,'latitude' )) %>%
-  leaflet( width = 900) %>%addCircles(
-   # remove polygon borders
-    
-   opacity = 0.5,
-   weight =3,
-   color='red')%>%
-  addProviderTiles(providers$Esri.OceanBasemap) 
-  #addTiles()
+library(tidyverse)
+library(ggspatial)
+source("practical_session_2/R/supporting_code/global_functions_light.R")
+text_size=8
+plot_height=25
+plot_width=18
+grid <- read_sf("practical_session_2/maps/grid")
 
+land=read_sf("practical_session_2/maps/land")%>% 
+  st_crop(., xmin=-10, xmax=43, ymin=20, ymax=48)
+
+gsa=read_sf("practical_session_2/maps/gsa")%>%
+  dplyr::filter(SMU_CODE == '23' )
+
+dep = read_sf("practical_session_2/maps/depth_contours")%>%
+  st_cast(., to = "POLYGON")%>%
+  st_set_crs(st_crs(gsa))%>%
+  st_buffer(0)%>%
+  st_crop(gsa)
+
+lims=c(st_bbox(gsa[c(1,3)], st_bbox(gsa[c(2,4)])))
+source("practical_session_2/R/supporting_code/plot_specifications.R")
+```
+```{r, echo=F}
+sfsample_data=st_as_sf(sample_data, coords = c('longitude' ,'latitude' ))%>%
+  st_set_crs(st_crs(gsa))%>%
+  dplyr::mutate(MMSI=as.character(MMSI))
+defo_map+
+  geom_sf(data=sfsample_data, aes(color=MMSI), size=0.5)+
+  scale_color_viridis_d()+
+  coord_sf(xlim=c(lims[[1]], lims[[3]]), ylim=c(lims[[2]], lims[[4]]) , label_axes = list(bottom = "E", right = "N"))+
+  theme()+ guides(colour = guide_legend(nrow = 1))
 
 ```
+
+
 
 ### Load R4ais functions
 
@@ -160,6 +181,53 @@ library(ggspatial)
 library(ggnewscale)
 source("practical_session_2/R/supporting_code/plot_specifications.R")
 ```
+
+
+### Q 5
+
+Looking at the fishing track data you may notice that there is poor information regarding the fishing trips and the fishing vessels, so our possibility of data exploration are limited. 
+
+<br>
+
+Here you are provided with the tools to get a bite of information on the destination of the fishing trip and on the origin of the fishing vessel. 
+Having this additional information at hand, you may create your own thematic map focusing on an aspect of your choice (for example effort by country, effort by port of destination etc..).
+
+<br>
+Here are provided some tips to make the job easier
+
+<br>
+
+ * Tip 1: By applying the correct function (within those seen this morning) it is possible to get information on the harbour of arrival of each trip. Then, this information can be linked to the tracks.
+
+```{r, echo=T, message=F,warning=F,results = 'hide'}
+vessels=unique(sample_data$MMSI)
+all_fishing_trips=list()
+for(i in 1:length(vessels)){
+  cat("\n", "vessel", i, "of", length(vessels))
+  cat("\n")
+  xvessel=sample_data[which(sample_data$MMSI == vessels[i]),]
+  dat_trip=create_fishing_trip(data=xvessel,
+                               ports=ports, 
+                               ports_buffer=port_buf,
+                               coastal_ban_zone=coastal_ban_zone)
+  all_fishing_trips[[i]]=dat_trip
+}
+all_fishing_trips=plyr::ldply(all_fishing_trips)
+```
+
+<br>
+
+ * Tip 2: the information of the ports is contained in the object 'ports', you need to paste it to the fishing data.
+  
+ * Tip 3: Nationality of the sample vessels: detailed vessel information is not provided for privacy reasons, however here we give the nationality of registration for the sample data.
+
+
+
+```{r, echo=T}
+vessel_country=data.frame(MMSI=2:9,
+           country=c(rep('ITA',4), rep('GRC',4)))
+```
+
 
 
 

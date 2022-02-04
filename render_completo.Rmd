@@ -74,14 +74,12 @@ Fishing data provided are distributed as in the map here shown:
 ```{r, echo=F}
 library(leaflet)
 library(RColorBrewer)
-pal_fun <- colorQuantile("YlOrRd", NULL, n = 4)
 st_as_sf(f_tracks) %>%
   leaflet( width = 900) %>%addPolylines(
    # remove polygon borders
-    
+    color = 'red',
    opacity = 0.5,
-   weight =3,
-   color='red')%>%
+   weight =3)%>%
   addProviderTiles(providers$Esri.OceanBasemap) 
   #addTiles()
 
