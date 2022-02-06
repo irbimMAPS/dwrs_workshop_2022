@@ -111,8 +111,9 @@ all_fishing_trips=plyr::ldply(all_fishing_trips)
 
 # Tip 3: Nationality of the sample vessels: detailed vessel information is not provided for privacy reasons, however here we give the nationality of registration for the sample data.
 
-vessel_country=data.frame(MMSI=2:9,
-           country=c(rep('ITA',4), rep('GRC',4)))
+vessel_country=data.frame(MMSI=2:10,
+           country=c(rep('GRC',6), rep('ITA',3)),
+           GSA_registration=c(rep('GSA23',6), rep('GSA16',1), rep('GSA11.2',2)))
 
 
 
