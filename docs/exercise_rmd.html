@@ -365,7 +365,7 @@ div.tocify {
   <a href="practical_session_1.html">Practical session 1</a>
 </li>
 <li>
-  <a href="render_completo.html">Practical session 2</a>
+  <a href="practical_session_2.html">Practical session 2</a>
 </li>
 <li>
   <a href="exercise_rmd.html">Exercise</a>
@@ -391,11 +391,6 @@ div.tocify {
 <div id="before-to-start" class="section level1">
 <h1>Before to start</h1>
 <p>You need to check your working directory (WD), which has to be “dwrs_workshop_2022”. The <code>getwd()</code> command shows you where the WD is. The <code>setwd('..')</code> command set the WD to a backward place.</p>
-<pre class="r"><code>getwd() # The WD have to be &quot;dwrs_workshop_2022&quot;</code></pre>
-<pre><code>## [1] &quot;C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop/dwrs_workshop_2022&quot;</code></pre>
-<pre class="r"><code>setwd(&#39;..&#39;) # Push one to set the WD to a backward place
-getwd() # check the WD: it have to be &quot;practical_session_2. If is not yet right, push again on line 6 and check&quot;</code></pre>
-<pre><code>## [1] &quot;C:/Users/e.armelloni/OneDrive/Lavoro/AIS/Lavori/Lavori_2022/GFCM_workshop&quot;</code></pre>
 <div id="load-sample-data" class="section level3">
 <h3>Load sample data</h3>
 <p>Data needed for the exercise are the sample fishing points</p>
@@ -405,7 +400,7 @@ getwd() # check the WD: it have to be &quot;practical_session_2. If is not yet r
 <tr>
 <th style="text-align:left;">
 </th>
-<th style="text-align:right;">
+<th style="text-align:left;">
 MMSI
 </th>
 <th style="text-align:left;">
@@ -427,7 +422,7 @@ speed
 <td style="text-align:left;">
 1.1
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -447,7 +442,7 @@ speed
 <td style="text-align:left;">
 1.2
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -467,7 +462,7 @@ speed
 <td style="text-align:left;">
 1.3
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -487,7 +482,7 @@ speed
 <td style="text-align:left;">
 1.4
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -507,7 +502,7 @@ speed
 <td style="text-align:left;">
 1.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -527,7 +522,7 @@ speed
 <td style="text-align:left;">
 1.6
 </td>
-<td style="text-align:right;">
+<td style="text-align:left;">
 2
 </td>
 <td style="text-align:left;">
@@ -552,13 +547,13 @@ speed
 <h3>Load R4ais functions</h3>
 <p>In addition you need to load the functions contained in the R4ais release. You need just to run the following lines</p>
 <pre class="r"><code>base_dir=getwd()
-# setwd(file.path(base_dir, &#39;practical_session_1&#39;))
-dirmaps=&quot;practical_session_1/AIS_data_processing/maps&quot; # path of the maps directory
-file_parameters=&quot;practical_session_1/AIS_data_processing/data/parameters.csv&quot; # import parameter table
-file_centroids=&quot;practical_session_1/AIS_data_processing/data/centroids.csv&quot; # import centroids 
+setwd(&#39;practical_session_1&#39;)
+dirmaps=&quot;AIS_data_processing/maps&quot; # path of the maps directory
+file_parameters=&quot;AIS_data_processing/data/parameters.csv&quot; # import parameter table
+file_centroids=&quot;AIS_data_processing/data/centroids.csv&quot; # import centroids 
 wgs=&quot;+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0&quot; # Insert your coordinates system
 install.missing.packages=T # set to TRUE if want to allow automatic installation of missing packages.
-source(&quot;practical_session_1/AIS_data_processing/R/global_functions.R&quot;) # load all internal function required
+source(&quot;AIS_data_processing/R/global_functions.R&quot;) # load all internal function required
 ports&lt;-read_sf(file.path(dirmaps, &quot;med_harb_gsa&quot;)) # import list of ports
 port_buf&lt;-st_buffer(ports, 0.001) # create a buffer
 st_crs(port_buf)=wgs # set crs
@@ -656,8 +651,9 @@ all_fishing_trips=plyr::ldply(all_fishing_trips)</code></pre>
 <li><p>Tip 2: the information of the ports is contained in the object ‘ports’, you need to paste it to the fishing data.</p></li>
 <li><p>Tip 3: Nationality of the sample vessels: detailed vessel information is not provided for privacy reasons, however here we give the nationality of registration for the sample data.</p></li>
 </ul>
-<pre class="r"><code>vessel_country=data.frame(MMSI=2:9,
-           country=c(rep(&#39;ITA&#39;,4), rep(&#39;GRC&#39;,4)))</code></pre>
+<pre class="r"><code>vessel_country=data.frame(MMSI=as.character(2:9),
+           country=c(rep(&#39;GRC&#39;,6), rep(&#39;ITA&#39;,2)),
+           GSA_registration=c(rep(&#39;GSA23&#39;,6), rep(&#39;GSA16&#39;,2)))</code></pre>
 </div>
 </div>
 

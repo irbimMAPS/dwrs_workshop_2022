@@ -13,13 +13,7 @@ Starting from the raw fishing data of 5 vessels operating in GSA 23 apply the R4
 # Before to start
 
 You need to check your working directory (WD), which has to be "dwrs_workshop_2022". The `getwd()` command shows you where the WD is. The `setwd('..')` command set the WD to a backward place. 
-
-```{r cars, echo=T, message=F, warning=F}
-getwd() # The WD have to be "dwrs_workshop_2022"
-setwd('..') # Push one to set the WD to a backward place
-getwd() # check the WD: it have to be "practical_session_2. If is not yet right, push again on line 6 and check"
-```
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_knit$set(root.dir = getwd())
 library(kableExtra)
 
@@ -84,13 +78,13 @@ In addition you need to load the functions contained in the R4ais release. You n
 
 ```{r, echo=T, message=F,warning=F}
 base_dir=getwd()
-# setwd(file.path(base_dir, 'practical_session_1'))
-dirmaps="practical_session_1/AIS_data_processing/maps" # path of the maps directory
-file_parameters="practical_session_1/AIS_data_processing/data/parameters.csv" # import parameter table
-file_centroids="practical_session_1/AIS_data_processing/data/centroids.csv" # import centroids 
+setwd('practical_session_1')
+dirmaps="AIS_data_processing/maps" # path of the maps directory
+file_parameters="AIS_data_processing/data/parameters.csv" # import parameter table
+file_centroids="AIS_data_processing/data/centroids.csv" # import centroids 
 wgs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" # Insert your coordinates system
 install.missing.packages=T # set to TRUE if want to allow automatic installation of missing packages.
-source("practical_session_1/AIS_data_processing/R/global_functions.R") # load all internal function required
+source("AIS_data_processing/R/global_functions.R") # load all internal function required
 ports<-read_sf(file.path(dirmaps, "med_harb_gsa")) # import list of ports
 port_buf<-st_buffer(ports, 0.001) # create a buffer
 st_crs(port_buf)=wgs # set crs
@@ -224,8 +218,9 @@ all_fishing_trips=plyr::ldply(all_fishing_trips)
 
 
 ```{r, echo=T}
-vessel_country=data.frame(MMSI=2:9,
-           country=c(rep('ITA',4), rep('GRC',4)))
+vessel_country=data.frame(MMSI=as.character(2:9),
+           country=c(rep('GRC',6), rep('ITA',2)),
+           GSA_registration=c(rep('GSA23',6), rep('GSA16',2)))
 ```
 
 
